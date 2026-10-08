@@ -52,12 +52,26 @@ Unit tests only, no Docker required:
 ./mvnw test
 ```
 
-Full build with the Testcontainers integration tests (Docker required):
+The full build adds two integration tests. `PatientWorkflowIT` runs fully
+in-process: H2 in memory for the application database and an in-memory HAPI
+FHIR R4 server inside the test JVM, so it needs no Docker and no external
+server. `DatabaseMigrationIT` is the only test that needs Docker, because it
+verifies the Flyway migrations against a disposable PostgreSQL container.
 
 ```bash
-./scripts/run-tests.sh
+./mvnw verify                                  # all tests
+./mvnw verify -Dit.test=PatientWorkflowIT      # workflow test alone, no Docker
 ```
 
-The script runs `./mvnw verify` and fails fast when the Docker daemon is
-unreachable. The integration tests start PostgreSQL and HAPI FHIR containers, so
-Docker must be running.
+`./scripts/run-tests.sh` checks for Docker and runs `./mvnw verify`.
+
+## Optional: no local FHIR server
+
+The local stack is optional. To run the application without the HAPI FHIR
+container, point it at a public FHIR R4 sandbox instead (synthetic data only,
+shared public server):
+
+```bash
+HEALTHCARE_FHIR_BASE_URL=https://hapi.fhir.org/baseR4 \
+  ./mvnw -pl healthcare-application spring-boot:run -Dspring-boot.run.profiles=dev
+```

@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.UUID;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.example.healthcare.patient.PatientRequest;
@@ -20,8 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
- * End-to-end patient workflow through the REST API, the application
- * PostgreSQL, and the containerized HAPI FHIR R4 server (plan row 6.4 of
+ * End-to-end patient workflow through the REST API, the in-memory
+ * application database, and the in-memory FHIR R4 server (plan row 6.4 of
  * {@code plans/spring-boot/01-foundation.md}).
  *
  * <p>Proves milestone M2: a synthetic patient is registered through
@@ -33,7 +34,8 @@ import org.springframework.http.ResponseEntity;
 class PatientWorkflowIT extends AbstractIntegrationTest {
 
     private static final String IDENTIFIER_SYSTEM = "http://hospital.example.org/mrn";
-    private static final String IDENTIFIER_VALUE = "MRN-IT-1001";
+    /** Unique per run: keeps the assertions independent of other tests and runs. */
+    private static final String IDENTIFIER_VALUE = "MRN-IT-" + UUID.randomUUID();
 
     @Autowired
     private TestRestTemplate restTemplate;

@@ -17,7 +17,7 @@ This is plan 4 of 4. It takes the working HL7 ingestion and clinical workflows f
 - M9: development-safe authentication and role-based authorization protect dashboard and API endpoints, audit logging records access and processing events, PHI is redacted from logs by default, credentials are externalized, and OAuth 2.0, SMART on FHIR, HIPAA fundamentals, and production requirements are documented.
 - The simulator seeds 20 synthetic patients, 10 inpatient encounters, 10 outpatient encounters, 5 practitioners, multiple hospital locations, vital-sign observations, laboratory reports, allergies, diagnoses, and medication prescriptions, with deterministic fixtures, idempotent restarts, and `POST /api/v1/simulator/reset` for a clean slate.
 - Micrometer metrics cover incoming HL7 message counts, successful and failed processing, retry counts, FHIR API latency and failures, and patient and encounter creation; Actuator health checks cover the application, PostgreSQL, and FHIR server connectivity; correlation identifiers tie logs and audit records together.
-- The 12 test scenarios from init.md section 15 run as deterministic end-to-end tests with Testcontainers, and the README, architecture overview, Mermaid diagrams, deployment guide, testing guide, and troubleshooting guide ship with the code.
+- The 12 test scenarios from init.md section 15 run as deterministic end-to-end tests, using the in-memory FHIR server from plan 01 and a PostgreSQL Testcontainer only for the database migration test, and the README, architecture overview, Mermaid diagrams, deployment guide, testing guide, and troubleshooting guide ship with the code.
 
 ## Phase 1: Version baseline and dependency verification
 
@@ -179,7 +179,7 @@ Closure work: run the 12 scenarios from init.md section 15 as end-to-end tests, 
 
 ### 7.1 End-to-end test suite
 
-- [ ] Extend the plan 01 Testcontainers harness in `healthcare-integration-tests/src/test/java` so the full suite starts PostgreSQL and the HAPI FHIR server, uses a fixed clock and deterministic seeds, and cleans state between tests; proof is two consecutive green runs of `./mvnw verify` recorded in this plan.
+- [ ] Extend the plan 01 integration harness in `healthcare-integration-tests/src/test/java` so the full suite reuses the in-memory FHIR server and the H2 database from plan 01, keeps the PostgreSQL Testcontainer only for the database migration test, uses a fixed clock and deterministic seeds, and cleans state between tests; proof is two consecutive green runs of `./mvnw verify` recorded in this plan.
 - [ ] Complete `PatientWorkflowIT` from plan 01 for init.md scenarios 1 and 2: patient registration succeeds, and duplicate registration is prevented; proof is test names and green results.
 - [ ] Complete `EncounterWorkflowIT` from plan 02 for scenarios 3 through 6: a valid ADT A01 creates an encounter, a duplicate ADT A01 creates no second encounter, ADT A02 updates the encounter location, and ADT A03 completes the encounter; proof is test names and green results.
 - [ ] Add `FhirIntegrationIT` for scenarios 7 and 9: laboratory results reference the correct patient, building on `LaboratoryWorkflowIT` from plan 03, and FHIR validation errors are handled without retry storms; proof is test names and green results.

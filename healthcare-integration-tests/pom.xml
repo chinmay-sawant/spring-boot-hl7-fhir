@@ -21,6 +21,21 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- In-process FHIR server for the workflow tests: plain HAPI server
+             framework, no JPA, no container. -->
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-server</artifactId>
+            <version>${hapi-fhir.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- In-memory application database for the workflow tests. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

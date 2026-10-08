@@ -1,7 +1,7 @@
 # Server settings for the local HAPI FHIR R4 JPA server.
 #
-# Mounted read-only into the hapi-fhir container at /app/config/application.yaml
-# and loaded on top of the image's built-in defaults through
+# Mounted read-only into the hapi-fhir container at /opt/hapi-config/ and
+# loaded on top of the image's built-in defaults through
 # SPRING_CONFIG_ADDITIONAL_LOCATION. Environment variables set in
 # docker-compose.yml (datasource credentials, hapi.fhir.fhir_version=R4) take
 # precedence over anything defined here, so no secrets belong in this file.

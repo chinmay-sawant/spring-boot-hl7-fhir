@@ -81,6 +81,12 @@
                         <goals>
                             <goal>repackage</goal>
                         </goals>
+                        <configuration>
+                            <!-- Keep the plain jar as the main artifact so downstream
+                                 modules can compile against the application classes; the
+                                 executable Spring Boot jar is attached as -exec.jar. -->
+                            <classifier>exec</classifier>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

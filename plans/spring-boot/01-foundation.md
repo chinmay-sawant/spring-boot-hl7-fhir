@@ -102,7 +102,7 @@ At the end of this plan:
 ### 4.3 Developer entry points
 
 - [ ] README quickstart: root `README.md` documents prerequisites (JDK 17, Docker with Compose v2), `.env` setup from `.env.example`, `./scripts/start-local.sh`, running the application with the dev profile (`./mvnw -pl healthcare-application spring-boot:run -Dspring-boot.run.profiles=dev`), the health and FHIR metadata URLs, and the test commands. Proof: walking the README from a clean checkout makes every command succeed.
-- [ ] Test script: `scripts/run-tests.sh` runs `./mvnw verify` and states that Docker must be running for Testcontainers-based integration tests. Proof: `./scripts/run-tests.sh` exits 0 with Docker available.
+- [ ] Test script: `scripts/run-tests.sh` checks Docker (needed only by `DatabaseMigrationIT`), prints guidance for a Docker-free workflow-test run, and runs `./mvnw verify`. Proof: `./scripts/run-tests.sh` exits 0 with Docker available.
 
 ### 4.4 Closure gate
 
@@ -147,8 +147,8 @@ At the end of this plan:
 
 ### 6.4 Integration test
 
-- [ ] Integration base: `healthcare-integration-tests/src/test/java/com/example/healthcare/support/AbstractIntegrationTest.java` starts a PostgreSQL container for the application database and a HAPI FHIR R4 JPA server container with its own PostgreSQL on a shared Testcontainers network, waits for `/fhir/metadata`, and wires `spring.datasource.*`, `spring.flyway.enabled=true`, and `healthcare.fhir.base-url` through `@DynamicPropertySource`. Proof: `PatientWorkflowIT` boots both containers with startup logs recorded.
-- [ ] Workflow test: `healthcare-integration-tests/src/test/java/com/example/healthcare/PatientWorkflowIT.java` registers a synthetic patient through `POST /api/v1/patients` (201), retrieves it through `GET /api/v1/patients/{id}` (200, matching identifier), asserts the FHIR server holds exactly one matching Patient for the identifier, repeats the registration, and asserts the count is still one. Proof: `./mvnw -pl healthcare-integration-tests -am verify -Dit.test=PatientWorkflowIT` passes with output recorded.
+- [ ] Integration base: `healthcare-integration-tests/src/test/java/com/example/healthcare/support/AbstractIntegrationTest.java` registers an in-process in-memory HAPI FHIR R4 server (`RestfulServer` at `/fhir/*` on the same embedded Tomcat, backed by `InMemoryPatientProvider`) and uses H2 in memory for the application database, wiring `server.port`, `healthcare.fhir.base-url`, and `spring.datasource.*` through `@DynamicPropertySource`, with Flyway off. No Docker and no external server are involved. Proof: `PatientWorkflowIT` runs green with the Docker daemon stopped.
+- [ ] Workflow test: `healthcare-integration-tests/src/test/java/com/example/healthcare/PatientWorkflowIT.java` registers a synthetic patient through `POST /api/v1/patients` (201), retrieves it through `GET /api/v1/patients/{id}` (200, matching identifier), asserts the FHIR server holds exactly one matching Patient for the identifier, repeats the registration, and asserts the count is still one. Proof: `./mvnw -pl healthcare-integration-tests -am verify -Dit.test=PatientWorkflowIT` passes with no Docker and no local stack, with output recorded.
 
 ### 6.5 Milestone demonstrations
 
@@ -158,7 +158,7 @@ At the end of this plan:
 
 ### 6.6 Closure gate
 
-- [ ] Closure gate: from the repo root on JDK 17 with Docker running, run `./mvnw clean verify`. Expected: unit tests, ArchUnit tests, `DatabaseMigrationIT`, and `PatientWorkflowIT` all pass. Record the Surefire and Failsafe summaries in this row; leave it unchecked until everything passes.
+- [ ] Closure gate: from the repo root on JDK 17, run `./mvnw clean verify` with Docker running. Expected: unit tests, ArchUnit tests, `PatientWorkflowIT` (in-process, no Docker), and `DatabaseMigrationIT` (PostgreSQL Testcontainer) all pass. Record the Surefire and Failsafe summaries in this row; leave it unchecked until everything passes.
 
 ## Dependencies
 

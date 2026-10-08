@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 #
-# Run the full Maven build and test suite: unit tests, ArchUnit checks, and the
-# Testcontainers-based *IT tests under Failsafe.
+# Run the full Maven build and test suite: unit tests, the ArchUnit checks, and
+# the *IT tests under Failsafe.
 #
-# Docker must be running: the integration tests start PostgreSQL and HAPI FHIR
-# containers.
+# The workflow tests run fully in-process: H2 in memory for the application
+# database and an in-memory HAPI FHIR server inside the test JVM. Only
+# DatabaseMigrationIT needs Docker, because it verifies the Flyway migrations
+# against a disposable PostgreSQL container.
 #
 # Usage:
 #   ./scripts/run-tests.sh
@@ -20,9 +22,11 @@ cd "$repo_root"
 
 if ! docker info >/dev/null 2>&1; then
   echo "ERROR: the Docker daemon is not reachable." >&2
-  echo "The integration tests need Docker (Testcontainers). Start Docker and retry." >&2
+  echo "DatabaseMigrationIT needs Docker (Testcontainers). Start Docker and retry." >&2
+  echo "Without Docker you can still run the workflow test on its own:" >&2
+  echo "  ./mvnw verify -Dit.test=PatientWorkflowIT" >&2
   exit 1
 fi
 
-echo "Docker is available. Running ./mvnw verify (unit tests + Testcontainers integration tests)..."
+echo "Running ./mvnw verify (unit tests + integration tests)..."
 ./mvnw verify

@@ -72,11 +72,18 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${FHIR_DB_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       # Layers infrastructure/fhir-server/application.yaml over the image defaults.
-      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/app/config/application.yaml
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/opt/hapi-config/
+      # Trim cold-start cost on a memory-constrained WSL2 host: C1-only JIT and
+      # a fixed heap avoid the swap thrash of a JIT-heavy Spring Boot boot.
+      # The first boot still creates the full JPA schema and takes minutes.
+      JAVA_TOOL_OPTIONS: "-XX:TieredStopAtLevel=1 -Xms512m -Xmx1536m"
     ports:
       - "${HAPI_FHIR_PORT:-8080}:8080"
     volumes:
-      - ./infrastructure/fhir-server/application.yaml:/app/config/application.yaml:ro
+      # Directory mount: the -tomcat variant has no /app/config directory to
+      # hold a single-file mount, so the whole config directory is mounted and
+      # Spring Boot loads application.yaml from it.
+      - ./infrastructure/fhir-server:/opt/hapi-config:ro
     healthcheck:
       # Probes the FHIR CapabilityStatement, so the stack is only reported
       # healthy once the R4 server actually answers FHIR requests.
