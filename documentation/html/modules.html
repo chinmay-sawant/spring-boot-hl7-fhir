@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Five modules, one direction · Healthcare Interoperability Learning Platform</title>
+<style>
+:root{
+  --bg:#f6f3ec; --panel:#fffdf8; --ink:#211d16; --ink-soft:#3d382e; --muted:#6f675a;
+  --line:#e4ddcf; --line-strong:#cfc6b4;
+  --clay:#a2502e; --clay-bg:#f7e8df;
+  --sage:#4f6b4a; --sage-bg:#e9efe4;
+  --blue:#3f5d8a; --blue-bg:#e7ecf5;
+  --gold:#8f6b14; --gold-bg:#f6eed6;
+  --plum:#6d4460; --plum-bg:#f2e7ef;
+  --code-bg:#f1ece0;
+  --shadow:0 1px 0 rgba(33,29,22,.05), 0 14px 34px -24px rgba(33,29,22,.45);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.62 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:600;line-height:1.16;letter-spacing:-.01em;margin:0 0 .5rem}
+h1{font-size:clamp(1.9rem,4vw,2.7rem)}
+h2{font-size:clamp(1.35rem,2.6vw,1.7rem);margin-top:0}
+h3{font-size:1.12rem}
+p{margin:.55rem 0}
+a{color:var(--clay);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:currentColor}
+code,kbd,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+code{font-size:.86em;background:var(--code-bg);padding:.12em .38em;border-radius:6px}
+pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;overflow:auto;font-size:.82rem;line-height:1.55;margin:.6rem 0}
+pre.code .c{color:var(--muted)}
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;gap:1.25rem;align-items:baseline;flex-wrap:wrap;
+  padding:.8rem clamp(1rem,4vw,2.5rem); background:rgba(246,243,236,.92);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+}
+.brand{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.02rem;font-weight:600;color:var(--ink);border:0}
+.brand span{color:var(--muted);font-weight:400;font-family:inherit}
+.topbar nav{display:flex;gap:.15rem;flex-wrap:wrap;margin-left:auto}
+.topbar nav a{padding:.3rem .6rem;border-radius:999px;font-size:.84rem;color:var(--ink-soft);border:0}
+.topbar nav a:hover{background:var(--panel);color:var(--ink)}
+.topbar nav a[aria-current="page"]{background:var(--ink);color:#fdfaf3}
+main{max-width:1060px;margin:0 auto;padding:clamp(1.4rem,4vw,3rem) clamp(1rem,4vw,2rem) 3.5rem}
+.kicker{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--clay);font-weight:600;margin:0 0 .45rem}
+.lede{font-size:1.06rem;color:var(--ink-soft);max-width:70ch}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+section{margin:2.6rem 0}
+.badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:.22rem .55rem;border-radius:999px;border:1px solid transparent;vertical-align:middle}
+.badge.built{background:var(--sage-bg);color:var(--sage);border-color:#c9d6bf}
+.badge.planned{background:var(--blue-bg);color:var(--blue);border-color:#c4d0e4}
+.badge.verified{background:var(--gold-bg);color:var(--gold);border-color:#e4d5a4}
+.badge.warn{background:var(--clay-bg);color:var(--clay);border-color:#e7c9b8}
+.badge.stale{background:var(--plum-bg);color:var(--plum);border-color:#dfc9da}
+.grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.15rem;box-shadow:var(--shadow)}
+.card h3{margin-bottom:.3rem}
+.card p{color:var(--ink-soft);font-size:.93rem}
+.card.link{transition:transform .15s ease,box-shadow .15s ease;display:block;color:inherit}
+.card.link:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(33,29,22,.05),0 20px 40px -26px rgba(33,29,22,.55)}
+.card.link{border-bottom-width:1px}
+.stats{display:grid;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:1.2rem 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.85rem 1rem}
+.stat b{display:block;font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.55rem;line-height:1.1}
+.stat span{font-size:.8rem;color:var(--muted)}
+.btn{
+  appearance:none;border:1px solid var(--ink);background:var(--ink);color:#fdfaf3;
+  font:inherit;font-size:.85rem;font-weight:600;padding:.42rem .9rem;border-radius:999px;cursor:pointer;
+}
+.btn:hover{background:#3a342a}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.btn.ghost:hover{background:var(--panel)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.small{font-size:.78rem;padding:.3rem .7rem}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:.15rem;gap:.15rem}
+.seg .btn{border:0;background:transparent;color:var(--ink-soft);border-radius:999px;font-weight:500}
+.seg .btn.active{background:var(--ink);color:#fdfaf3}
+.tabs{display:flex;gap:.3rem;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:1rem}
+.tab{appearance:none;border:0;background:transparent;font:inherit;font-size:.9rem;padding:.5rem .85rem;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--ink);border-bottom-color:var(--clay);font-weight:600}
+.callout{border:1px solid var(--line);border-left:4px solid var(--line-strong);border-radius:10px;background:var(--panel);padding:.75rem .95rem;font-size:.9rem;margin:.8rem 0}
+.callout.info{border-left-color:var(--blue)}
+.callout.good{border-left-color:var(--sage)}
+.callout.warn{border-left-color:var(--clay)}
+.callout .label{font-weight:700;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:.15rem}
+.callout.info .label{color:var(--blue)} .callout.good .label{color:var(--sage)} .callout.warn .label{color:var(--clay)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;background:var(--panel);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#efe9db;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+tr:last-child td{border-bottom:0}
+td code{background:transparent;padding:0}
+.tablewrap{overflow-x:auto;border-radius:10px}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0}
+.chip{font-size:.78rem;padding:.22rem .6rem;border-radius:999px;border:1px solid var(--line-strong);background:var(--panel);cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);color:#fdfaf3;border-color:var(--ink)}
+.cols{display:grid;gap:1rem;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+@media (max-width:820px){.cols{grid-template-columns:1fr}.topbar nav{margin-left:0}}
+.layer-stack{display:flex;flex-direction:column;gap:.45rem}
+.layer{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.55rem .8rem;font-size:.85rem;color:var(--muted);transition:all .18s ease}
+.layer b{display:block;color:var(--ink);font-size:.9rem}
+.layer .tech{font-size:.76rem;color:var(--muted)}
+.layer.active{border-color:var(--clay);background:var(--clay-bg);box-shadow:0 0 0 1px var(--clay) inset}
+.layer.active b{color:var(--clay)}
+.step-detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.15rem;min-height:320px}
+.dots{display:flex;gap:.35rem;margin-bottom:.8rem;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line-strong);border:0;padding:0;cursor:pointer}
+.dot.active{background:var(--clay);transform:scale(1.15)}
+.dot.done{background:var(--sage)}
+.controls{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;justify-content:space-between;margin:1rem 0}
+.flow-call{font-size:.85rem;border:1px dashed var(--line-strong);border-radius:10px;padding:.5rem .7rem;background:var(--code-bg);font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink-soft)}
+.terminal{background:#221f1a;color:#e9e2d4;border-radius:12px;padding:1rem 1.1rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.7;min-height:220px}
+.terminal .prompt{color:#b8d4a0}
+.terminal .dim{color:#8d8577}
+.terminal .ok{color:#c7e3b3}
+.terminal .err{color:#e8a08a}
+.msg{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.84rem;line-height:1.9;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;overflow-x:auto}
+.msg .seg{font-weight:700;color:var(--blue)}
+.msg .field{cursor:pointer;border-radius:4px;padding:0 .1em;border-bottom:1px dashed var(--line-strong)}
+.msg .field:hover,.msg .field.on{background:var(--gold-bg);border-bottom-color:var(--gold);color:var(--gold)}
+.stagecards{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin:1rem 0}
+.stagecard{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.6rem .7rem;cursor:pointer;font-size:.83rem;text-align:left;font-family:inherit;color:var(--ink-soft)}
+.stagecard b{display:block;color:var(--ink);font-size:.87rem}
+.stagecard:hover{border-color:var(--ink)}
+.stagecard.on{border-color:var(--clay);background:var(--clay-bg)}
+.detail-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;min-height:150px}
+.adr-list{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.adr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.7rem .8rem;cursor:pointer;text-align:left;font-family:inherit}
+.adr b{display:block;color:var(--ink);font-size:.83rem}
+.adr span{font-size:.78rem;color:var(--muted)}
+.adr.on{border-color:var(--plum);background:var(--plum-bg)}
+.timeline{position:relative;margin:1.2rem 0 0;padding-left:1.1rem;border-left:2px solid var(--line-strong)}
+.tl-item{position:relative;padding:.15rem 0 1.1rem 1rem}
+.tl-item::before{content:"";position:absolute;left:-1.55rem;top:.35rem;width:11px;height:11px;border-radius:50%;background:var(--line-strong);border:2px solid var(--bg)}
+.tl-item.done::before{background:var(--sage)}
+.tl-item.now::before{background:var(--gold)}
+.tl-item.plan::before{background:var(--blue)}
+.tl-item h3{margin:0}
+.services{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.svc{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.7rem .85rem;font-size:.86rem}
+.svc b{display:block;font-size:.9rem}
+.svc .port{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;color:var(--clay)}
+.taglist{display:flex;gap:.35rem;flex-wrap:wrap;margin:.4rem 0}
+.pkg{font-size:.78rem;padding:.18rem .55rem;border-radius:8px;border:1px solid var(--line);background:var(--panel)}
+.pkg.impl{border-color:#c9d6bf;background:var(--sage-bg);color:var(--sage)}
+.pkg.stub{border-style:dashed;color:var(--muted)}
+.pkg .st{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;margin-left:.35rem}
+.svgwrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.8rem;overflow-x:auto}
+.svgwrap svg{display:block;min-width:600px;width:100%;height:auto}
+.svg-box{cursor:pointer}
+.svg-box rect{fill:#fffdf8;stroke:var(--line-strong);stroke-width:1.5;rx:12}
+.svg-box.dim rect{opacity:.45}
+.svg-box.sel rect{stroke:var(--clay);stroke-width:2.5;fill:var(--clay-bg)}
+.svg-box text{font-family:ui-sans-serif,system-ui,sans-serif;fill:var(--ink)}
+.svg-box text.t1{font-size:14px;font-weight:700}
+.svg-box text.t2{font-size:11px;fill:var(--muted)}
+.edge{stroke:var(--line-strong);stroke-width:1.6;fill:none;marker-end:url(#arrow)}
+.edge.dashed{stroke-dasharray:5 4}
+footer{border-top:1px solid var(--line);padding:1.4rem clamp(1rem,4vw,2.5rem);font-size:.82rem;color:var(--muted)}
+footer p{max-width:900px;margin:0 auto}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:.5rem 0}
+.legend b{color:var(--ink)}
+.pulse{stroke:var(--clay);stroke-width:2.5;fill:none;stroke-dasharray:6 8;animation:pulse 1.6s linear infinite}
+@keyframes pulse{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card.link{transition:none}
+  .pulse{animation:none}
+}
+@media print{.topbar nav{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">Healthcare Interop <span>Learning Platform</span></a>
+  <nav aria-label="Explainers">
+    <a href="index.html">Overview</a>
+    <a href="request-lifecycle.html">Patient flow</a>
+    <a href="hl7-pipeline.html">HL7 pipeline</a>
+    <a href="modules.html" aria-current="page">Modules</a>
+    <a href="data.html">Data</a>
+    <a href="operations.html">Operations</a>
+    <a href="roadmap.html">Roadmap</a>
+  </nav>
+</header>
+<main>
+
+<p class="kicker">Explainer 3 · Architecture</p>
+<h1>Five modules, one direction</h1>
+<p class="lede">The platform is a modular monolith: one Spring Boot deployable built from five Maven
+modules, with the dependency direction enforced by tests instead of good intentions. Click a box in the
+graph to see what lives inside the module and which boundaries apply to it.</p>
+
+<div class="svgwrap">
+<svg viewBox="0 0 720 420" role="img" aria-label="Module dependency graph">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#cfc6b4"></path>
+    </marker>
+  </defs>
+  <path class="edge dashed" d="M242,65 L246,65"></path>
+  <path class="edge" d="M330,104 L330,166"></path>
+  <path class="edge" d="M540,104 L540,166"></path>
+  <path class="edge" d="M330,244 L330,306"></path>
+  <path class="edge" d="M540,244 L540,306"></path>
+  <path class="edge" d="M268,104 C150,150 150,290 242,332"></path>
+  <g class="svg-box" data-module="integration" tabindex="0" role="button">
+    <rect x="8" y="30" width="234" height="72" rx="12"></rect>
+    <text class="t1" x="125" y="60" text-anchor="middle">healthcare-integration-tests</text>
+    <text class="t2" x="125" y="80" text-anchor="middle">*IT classes only · no production code</text>
+  </g>
+  <g class="svg-box" data-module="application" tabindex="0" role="button">
+    <rect x="250" y="30" width="380" height="74" rx="12"></rect>
+    <text class="t1" x="440" y="60" text-anchor="middle">healthcare-application</text>
+    <text class="t2" x="440" y="80" text-anchor="middle">Spring Boot host · REST API · workflows · wiring</text>
+  </g>
+  <g class="svg-box" data-module="hl7" tabindex="0" role="button">
+    <rect x="250" y="170" width="170" height="74" rx="12"></rect>
+    <text class="t1" x="335" y="200" text-anchor="middle">healthcare-hl7</text>
+    <text class="t2" x="335" y="220" text-anchor="middle">HL7 v2 over HAPI HL7v2</text>
+  </g>
+  <g class="svg-box" data-module="fhir" tabindex="0" role="button">
+    <rect x="460" y="170" width="170" height="74" rx="12"></rect>
+    <text class="t1" x="545" y="200" text-anchor="middle">healthcare-fhir</text>
+    <text class="t2" x="545" y="220" text-anchor="middle">FHIR R4 over HAPI FHIR</text>
+  </g>
+  <g class="svg-box" data-module="domain" tabindex="0" role="button">
+    <rect x="250" y="310" width="380" height="74" rx="12"></rect>
+    <text class="t1" x="440" y="340" text-anchor="middle">healthcare-domain</text>
+    <text class="t2" x="440" y="360" text-anchor="middle">model · business rules · ports · JDK only</text>
+  </g>
+</svg>
+</div>
+<p class="small muted">Solid arrows are compile dependencies; the dashed arrow is the test module compiling
+against the application. No cycles allowed, and the bottom module depends on nothing else.</p>
+
+<div class="detail-panel" id="moduleDetail" style="margin-top:1rem"></div>
+
+<section>
+  <h2>The two boundary tests</h2>
+  <div class="grid">
+    <div class="card">
+      <h3><code>DomainArchitectureTest</code> <span class="badge built">unit</span></h3>
+      <p class="small">Runs under Surefire in <code>healthcare-domain</code>. Four ArchUnit rules, all with
+      <code>allowEmptyShould(true)</code>:</p>
+      <ul class="small">
+        <li>domain classes depend only on <code>java..</code> and themselves</li>
+        <li>no <code>org.springframework..</code> imports</li>
+        <li>no <code>jakarta..</code> imports</li>
+        <li>no <code>ca.uhn..</code> (HAPI) imports</li>
+      </ul>
+      <p class="small muted">The first rule already implies the other three; the explicit bans produce
+      clearer failure messages.</p>
+    </div>
+    <div class="card">
+      <h3><code>ModuleDependencyIT</code> <span class="badge built">integration</span></h3>
+      <p class="small">Runs under Failsafe in <code>healthcare-integration-tests</code>, over production
+      bytecode of all modules. Four rules:</p>
+      <ul class="small">
+        <li><code>domain</code> depends on no other module</li>
+        <li><code>hl7</code> does not depend on <code>fhir</code> or <code>application</code></li>
+        <li><code>fhir</code> does not depend on <code>hl7</code> or <code>application</code></li>
+        <li>slices <code>com.example.healthcare.(*)..</code> are free of cycles</li>
+      </ul>
+      <p class="small muted">Only <code>healthcare-application</code> may point at the other three, which
+      is exactly what its POM does.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Layers to modules</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Layer</th><th>Responsibility</th><th>Where it lives</th></tr>
+    <tr><td>Input adapters</td><td>REST controllers; HL7 receiver and parser</td><td><code>healthcare-application</code> (REST), <code>healthcare-hl7</code> (planned)</td></tr>
+    <tr><td>Application layer</td><td>Use cases, message router and processing</td><td><code>healthcare-application</code> today; router logic planned in <code>healthcare-hl7</code></td></tr>
+    <tr><td>Domain and ports</td><td>Patient record, business rules, <code>PatientRepositoryPort</code></td><td><code>healthcare-domain</code>, framework-free</td></tr>
+    <tr><td>Outbound adapters</td><td>FHIR adapter; database access to operational metadata (planned)</td><td><code>healthcare-fhir</code>; persistence planned in <code>healthcare-application</code></td></tr>
+    <tr><td>Infrastructure</td><td>HAPI FHIR R4 server, two PostgreSQL databases</td><td>Docker containers, never imported as code</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Build and test commands</h2>
+  <div class="cols">
+    <div>
+      <pre class="code">./mvnw test            # unit tests only, no Docker
+./mvnw verify          # all tests, adds *IT classes
+./mvnw verify -Dit.test=PatientWorkflowIT
+./mvnw -pl healthcare-domain test
+./mvnw -pl healthcare-integration-tests -am \
+    verify -Dit.test=ModuleDependencyIT</pre>
+    </div>
+    <div>
+      <p class="small">Surefire runs <code>*Test</code> and excludes <code>*IT</code>. Failsafe runs only
+      <code>*IT</code> during <code>verify</code>, with <code>failIfNoSpecifiedTests=false</code> so a
+      targeted <code>-Dit.test=</code> run does not fail modules that lack that class.</p>
+      <div class="callout info"><span class="label">exec classifier</span>
+      The application module builds an executable jar with the <code>exec</code> classifier, so the plain
+      jar stays the main artifact and the integration test module can compile against application classes.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer>
+  <p>Interactive explainers for the Healthcare Interoperability Learning Platform. Facts checked against the code and recorded test runs at commit <code>366bdc2</code> (2026-10-08). Pages marked <span class="badge planned">planned</span> describe the target design in <code>plans/</code>, not running code. Generated with the <code>explainer-ladder</code> skill, rung 3.</p>
+</footer>
+
+<script>
+const MODULES = {
+ domain: {title:"healthcare-domain", role:"Domain model, business rules, and ports. Free of Spring, web, and infrastructure dependencies.", deps:"No module dependencies. One compile-time dependency: none at all. Test-only: ArchUnit.",
+  packages:[["patient","Patient record, PatientRepositoryPort","impl"],["clinical, encounter, event, exception, laboratory","placeholder packages with intent statements","stub"]],
+  tests:"DomainArchitectureTest (4 ArchUnit rules, Surefire)",
+  note:"Patient is a plain record: identifierSystem, identifierValue, familyName, givenName, birthDate, gender, resourceId. The business identifier pair is the matching key; resourceId is null until the FHIR server assigns one."},
+ hl7: {title:"healthcare-hl7", role:"HL7 v2 parsing, validation, routing, acknowledgment, and generation over HAPI HL7v2.", deps:"healthcare-domain. Libraries: hapi-base 2.6.0 and hapi-structures-v251 2.6.0.",
+  packages:[["acknowledgment, generator, parser, receiver, router, validator","all six packages are package-info placeholders","stub"]],
+  tests:"No test sources yet",
+  note:"The module compiles but contains no HL7 code. Everything on the pipeline page is plan 02."},
+ fhir: {title:"healthcare-fhir", role:"FHIR R4 client adapters, mapping, terminology, validation, and transactions over HAPI FHIR.", deps:"healthcare-domain. Libraries: hapi-fhir-client and hapi-fhir-structures-r4 8.12.1, plus spring-boot-starter for configuration binding and bean wiring.",
+  packages:[["client, config, mapper","FhirPatientAdapter, FhirClientConfig/Properties, FhirPatientMapper","impl"],["terminology, transaction, validator","placeholders: code lookups, transaction Bundles, resource validation","stub"]],
+  tests:"17 unit tests: adapter (8), mapper (4), client config (3), properties (2)",
+  note:"The only non-application module with Spring on the main classpath. ArchUnit still forbids it from depending on healthcare-hl7 or healthcare-application."},
+ application: {title:"healthcare-application", role:"Spring Boot host: REST API, workflows, and infrastructure wiring.", deps:"healthcare-domain, healthcare-hl7, healthcare-fhir. Starters: web, validation, actuator, jdbc; Flyway; PostgreSQL driver (runtime).",
+  packages:[["patient, web","PatientController/Service/Request/Response, GlobalExceptionHandler","impl"],["ingestion, encounter, config, dashboard, simulator, audit","planned packages, not created yet","stub"]],
+  tests:"10 unit tests: context boot (1), controller (5), service (4)",
+  note:"Runs on port 8081 and calls the FHIR server on 8080. Flyway migrations live here; the executable jar uses the exec classifier."},
+ integration: {title:"healthcare-integration-tests", role:"Integration and architecture tests. Runs *IT classes under Failsafe; no production classes.", deps:"healthcare-application at compile scope (to pull the other modules onto the test classpath), hapi-fhir-server, H2, spring-boot-starter-test, Testcontainers, ArchUnit.",
+  packages:[["support","AbstractIntegrationTest, InMemoryFhirServerConfiguration, InMemoryPatientProvider","impl"],["architecture","ModuleDependencyIT","impl"]],
+  tests:"15 integration tests: PatientWorkflowIT (1), DatabaseMigrationIT (10), ModuleDependencyIT (4)",
+  note:"The in-memory FHIR server runs on the same embedded Tomcat as the app during tests, so the workflow test needs no Docker. Only DatabaseMigrationIT starts a container."}
+};
+const detail = document.getElementById("moduleDetail");
+let selected = "application";
+function renderModule(key){
+  const m = MODULES[key];
+  const pkgs = m.packages.map(function(p){
+    return "<span class='pkg " + (p[2] === "impl" ? "impl" : "stub") + "'>" + p[0] + "<span class='st'>" + (p[2] === "impl" ? "built" : "placeholder") + "</span></span>";
+  }).join("");
+  detail.innerHTML = "<h3>" + m.title + "</h3><p class='small'>" + m.role + "</p>" +
+    "<p class='small'><b>Depends on:</b> " + m.deps + "</p>" +
+    "<div class='taglist'>" + pkgs + "</div>" +
+    "<p class='small'><b>Tests:</b> " + m.tests + "</p>" +
+    "<p class='small muted'>" + m.note + "</p>";
+  document.querySelectorAll(".svg-box").forEach(function(el){
+    el.classList.toggle("sel", el.dataset.module === key);
+  });
+}
+document.querySelectorAll(".svg-box").forEach(function(el){
+  el.addEventListener("click", function(){ selected = el.dataset.module; renderModule(selected); });
+  el.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selected = el.dataset.module; renderModule(selected); } });
+});
+renderModule(selected);
+</script>
+
+</body>
+</html>

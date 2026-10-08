@@ -48,8 +48,8 @@ Ties a source system identifier to the FHIR resource it produced. This mapping i
 | source_identifier_value | VARCHAR(255) | no | For example MRN-1001 |
 | fhir_resource_type | VARCHAR(100) | no | For example Patient or Encounter |
 | fhir_resource_id | VARCHAR(150) | no | Assigned by the FHIR server |
-| created_at | TIMESTAMPTZ | yes | Set at insert time |
-| updated_at | TIMESTAMPTZ | yes | Refreshed when the mapping changes |
+| created_at | TIMESTAMPTZ | no | `NOT NULL DEFAULT now()`, set at insert time |
+| updated_at | TIMESTAMPTZ | no | `NOT NULL DEFAULT now()`, refreshed when the mapping changes |
 
 Constraints and indexes:
 

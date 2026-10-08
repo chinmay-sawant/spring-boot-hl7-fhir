@@ -11,7 +11,19 @@ This directory documents the Healthcare Interoperability Learning Platform. The 
 - [API conventions](architecture/api-conventions.md): `/api/v1` rules and the separation from the native `/fhir` APIs.
 - [Architecture decision records](architecture/architecture-decisions/README.md): the index for ADR-0001 through ADR-0005.
 
-Two more architecture pages arrive with the build phases and are not part of the initial documentation set: `architecture/dependency-versions.md` in plan 01 phase 2.1 and `architecture/module-dependencies.md` in plan 01 phase 2.3.
+The two architecture pages tied to build phases are present: `architecture/dependency-versions.md` (plan 01 phase 2.1) and `architecture/module-dependencies.md` (plan 01 phase 2.3).
+
+## Interactive explainers
+
+The explainer pages under `html/` are self-contained HTML files: no build step, no network dependency, controls and diagrams instead of prose alone. Built pages follow the code; planned pages follow `plans/`.
+
+- [Explainers home](html/index.html)
+- [One POST, five layers](html/request-lifecycle.html): the patient registration flow step by step.
+- [The HL7 v2 pipeline](html/hl7-pipeline.html): message anatomy and the planned pipeline stages.
+- [Five modules, one direction](html/modules.html): module graph and boundary rules.
+- [Two databases, one identity](html/data.html): ownership and the identity model.
+- [The local stack](html/operations.html): Compose stack, ports, profiles, and the test matrix.
+- [Decisions and roadmap](html/roadmap.html): ADRs and plan status against the code.
 
 ## Plans
 

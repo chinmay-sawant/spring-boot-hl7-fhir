@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The local stack · Healthcare Interoperability Learning Platform</title>
+<style>
+:root{
+  --bg:#f6f3ec; --panel:#fffdf8; --ink:#211d16; --ink-soft:#3d382e; --muted:#6f675a;
+  --line:#e4ddcf; --line-strong:#cfc6b4;
+  --clay:#a2502e; --clay-bg:#f7e8df;
+  --sage:#4f6b4a; --sage-bg:#e9efe4;
+  --blue:#3f5d8a; --blue-bg:#e7ecf5;
+  --gold:#8f6b14; --gold-bg:#f6eed6;
+  --plum:#6d4460; --plum-bg:#f2e7ef;
+  --code-bg:#f1ece0;
+  --shadow:0 1px 0 rgba(33,29,22,.05), 0 14px 34px -24px rgba(33,29,22,.45);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.62 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:600;line-height:1.16;letter-spacing:-.01em;margin:0 0 .5rem}
+h1{font-size:clamp(1.9rem,4vw,2.7rem)}
+h2{font-size:clamp(1.35rem,2.6vw,1.7rem);margin-top:0}
+h3{font-size:1.12rem}
+p{margin:.55rem 0}
+a{color:var(--clay);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:currentColor}
+code,kbd,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+code{font-size:.86em;background:var(--code-bg);padding:.12em .38em;border-radius:6px}
+pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;overflow:auto;font-size:.82rem;line-height:1.55;margin:.6rem 0}
+pre.code .c{color:var(--muted)}
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;gap:1.25rem;align-items:baseline;flex-wrap:wrap;
+  padding:.8rem clamp(1rem,4vw,2.5rem); background:rgba(246,243,236,.92);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+}
+.brand{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.02rem;font-weight:600;color:var(--ink);border:0}
+.brand span{color:var(--muted);font-weight:400;font-family:inherit}
+.topbar nav{display:flex;gap:.15rem;flex-wrap:wrap;margin-left:auto}
+.topbar nav a{padding:.3rem .6rem;border-radius:999px;font-size:.84rem;color:var(--ink-soft);border:0}
+.topbar nav a:hover{background:var(--panel);color:var(--ink)}
+.topbar nav a[aria-current="page"]{background:var(--ink);color:#fdfaf3}
+main{max-width:1060px;margin:0 auto;padding:clamp(1.4rem,4vw,3rem) clamp(1rem,4vw,2rem) 3.5rem}
+.kicker{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--clay);font-weight:600;margin:0 0 .45rem}
+.lede{font-size:1.06rem;color:var(--ink-soft);max-width:70ch}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+section{margin:2.6rem 0}
+.badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:.22rem .55rem;border-radius:999px;border:1px solid transparent;vertical-align:middle}
+.badge.built{background:var(--sage-bg);color:var(--sage);border-color:#c9d6bf}
+.badge.planned{background:var(--blue-bg);color:var(--blue);border-color:#c4d0e4}
+.badge.verified{background:var(--gold-bg);color:var(--gold);border-color:#e4d5a4}
+.badge.warn{background:var(--clay-bg);color:var(--clay);border-color:#e7c9b8}
+.badge.stale{background:var(--plum-bg);color:var(--plum);border-color:#dfc9da}
+.grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.15rem;box-shadow:var(--shadow)}
+.card h3{margin-bottom:.3rem}
+.card p{color:var(--ink-soft);font-size:.93rem}
+.card.link{transition:transform .15s ease,box-shadow .15s ease;display:block;color:inherit}
+.card.link:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(33,29,22,.05),0 20px 40px -26px rgba(33,29,22,.55)}
+.card.link{border-bottom-width:1px}
+.stats{display:grid;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:1.2rem 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.85rem 1rem}
+.stat b{display:block;font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.55rem;line-height:1.1}
+.stat span{font-size:.8rem;color:var(--muted)}
+.btn{
+  appearance:none;border:1px solid var(--ink);background:var(--ink);color:#fdfaf3;
+  font:inherit;font-size:.85rem;font-weight:600;padding:.42rem .9rem;border-radius:999px;cursor:pointer;
+}
+.btn:hover{background:#3a342a}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.btn.ghost:hover{background:var(--panel)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.small{font-size:.78rem;padding:.3rem .7rem}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:.15rem;gap:.15rem}
+.seg .btn{border:0;background:transparent;color:var(--ink-soft);border-radius:999px;font-weight:500}
+.seg .btn.active{background:var(--ink);color:#fdfaf3}
+.tabs{display:flex;gap:.3rem;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:1rem}
+.tab{appearance:none;border:0;background:transparent;font:inherit;font-size:.9rem;padding:.5rem .85rem;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--ink);border-bottom-color:var(--clay);font-weight:600}
+.callout{border:1px solid var(--line);border-left:4px solid var(--line-strong);border-radius:10px;background:var(--panel);padding:.75rem .95rem;font-size:.9rem;margin:.8rem 0}
+.callout.info{border-left-color:var(--blue)}
+.callout.good{border-left-color:var(--sage)}
+.callout.warn{border-left-color:var(--clay)}
+.callout .label{font-weight:700;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:.15rem}
+.callout.info .label{color:var(--blue)} .callout.good .label{color:var(--sage)} .callout.warn .label{color:var(--clay)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;background:var(--panel);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#efe9db;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+tr:last-child td{border-bottom:0}
+td code{background:transparent;padding:0}
+.tablewrap{overflow-x:auto;border-radius:10px}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0}
+.chip{font-size:.78rem;padding:.22rem .6rem;border-radius:999px;border:1px solid var(--line-strong);background:var(--panel);cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);color:#fdfaf3;border-color:var(--ink)}
+.cols{display:grid;gap:1rem;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+@media (max-width:820px){.cols{grid-template-columns:1fr}.topbar nav{margin-left:0}}
+.layer-stack{display:flex;flex-direction:column;gap:.45rem}
+.layer{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.55rem .8rem;font-size:.85rem;color:var(--muted);transition:all .18s ease}
+.layer b{display:block;color:var(--ink);font-size:.9rem}
+.layer .tech{font-size:.76rem;color:var(--muted)}
+.layer.active{border-color:var(--clay);background:var(--clay-bg);box-shadow:0 0 0 1px var(--clay) inset}
+.layer.active b{color:var(--clay)}
+.step-detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.15rem;min-height:320px}
+.dots{display:flex;gap:.35rem;margin-bottom:.8rem;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line-strong);border:0;padding:0;cursor:pointer}
+.dot.active{background:var(--clay);transform:scale(1.15)}
+.dot.done{background:var(--sage)}
+.controls{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;justify-content:space-between;margin:1rem 0}
+.flow-call{font-size:.85rem;border:1px dashed var(--line-strong);border-radius:10px;padding:.5rem .7rem;background:var(--code-bg);font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink-soft)}
+.terminal{background:#221f1a;color:#e9e2d4;border-radius:12px;padding:1rem 1.1rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.7;min-height:220px}
+.terminal .prompt{color:#b8d4a0}
+.terminal .dim{color:#8d8577}
+.terminal .ok{color:#c7e3b3}
+.terminal .err{color:#e8a08a}
+.msg{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.84rem;line-height:1.9;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;overflow-x:auto}
+.msg .seg{font-weight:700;color:var(--blue)}
+.msg .field{cursor:pointer;border-radius:4px;padding:0 .1em;border-bottom:1px dashed var(--line-strong)}
+.msg .field:hover,.msg .field.on{background:var(--gold-bg);border-bottom-color:var(--gold);color:var(--gold)}
+.stagecards{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin:1rem 0}
+.stagecard{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.6rem .7rem;cursor:pointer;font-size:.83rem;text-align:left;font-family:inherit;color:var(--ink-soft)}
+.stagecard b{display:block;color:var(--ink);font-size:.87rem}
+.stagecard:hover{border-color:var(--ink)}
+.stagecard.on{border-color:var(--clay);background:var(--clay-bg)}
+.detail-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;min-height:150px}
+.adr-list{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.adr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.7rem .8rem;cursor:pointer;text-align:left;font-family:inherit}
+.adr b{display:block;color:var(--ink);font-size:.83rem}
+.adr span{font-size:.78rem;color:var(--muted)}
+.adr.on{border-color:var(--plum);background:var(--plum-bg)}
+.timeline{position:relative;margin:1.2rem 0 0;padding-left:1.1rem;border-left:2px solid var(--line-strong)}
+.tl-item{position:relative;padding:.15rem 0 1.1rem 1rem}
+.tl-item::before{content:"";position:absolute;left:-1.55rem;top:.35rem;width:11px;height:11px;border-radius:50%;background:var(--line-strong);border:2px solid var(--bg)}
+.tl-item.done::before{background:var(--sage)}
+.tl-item.now::before{background:var(--gold)}
+.tl-item.plan::before{background:var(--blue)}
+.tl-item h3{margin:0}
+.services{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.svc{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.7rem .85rem;font-size:.86rem}
+.svc b{display:block;font-size:.9rem}
+.svc .port{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;color:var(--clay)}
+.taglist{display:flex;gap:.35rem;flex-wrap:wrap;margin:.4rem 0}
+.pkg{font-size:.78rem;padding:.18rem .55rem;border-radius:8px;border:1px solid var(--line);background:var(--panel)}
+.pkg.impl{border-color:#c9d6bf;background:var(--sage-bg);color:var(--sage)}
+.pkg.stub{border-style:dashed;color:var(--muted)}
+.pkg .st{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;margin-left:.35rem}
+.svgwrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.8rem;overflow-x:auto}
+.svgwrap svg{display:block;min-width:600px;width:100%;height:auto}
+.svg-box{cursor:pointer}
+.svg-box rect{fill:#fffdf8;stroke:var(--line-strong);stroke-width:1.5;rx:12}
+.svg-box.dim rect{opacity:.45}
+.svg-box.sel rect{stroke:var(--clay);stroke-width:2.5;fill:var(--clay-bg)}
+.svg-box text{font-family:ui-sans-serif,system-ui,sans-serif;fill:var(--ink)}
+.svg-box text.t1{font-size:14px;font-weight:700}
+.svg-box text.t2{font-size:11px;fill:var(--muted)}
+.edge{stroke:var(--line-strong);stroke-width:1.6;fill:none;marker-end:url(#arrow)}
+.edge.dashed{stroke-dasharray:5 4}
+footer{border-top:1px solid var(--line);padding:1.4rem clamp(1rem,4vw,2.5rem);font-size:.82rem;color:var(--muted)}
+footer p{max-width:900px;margin:0 auto}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:.5rem 0}
+.legend b{color:var(--ink)}
+.pulse{stroke:var(--clay);stroke-width:2.5;fill:none;stroke-dasharray:6 8;animation:pulse 1.6s linear infinite}
+@keyframes pulse{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card.link{transition:none}
+  .pulse{animation:none}
+}
+@media print{.topbar nav{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">Healthcare Interop <span>Learning Platform</span></a>
+  <nav aria-label="Explainers">
+    <a href="index.html">Overview</a>
+    <a href="request-lifecycle.html">Patient flow</a>
+    <a href="hl7-pipeline.html">HL7 pipeline</a>
+    <a href="modules.html">Modules</a>
+    <a href="data.html">Data</a>
+    <a href="operations.html" aria-current="page">Operations</a>
+    <a href="roadmap.html">Roadmap</a>
+  </nav>
+</header>
+<main>
+
+<p class="kicker">Explainer 5 · Running locally</p>
+<h1>The local stack, started in one script</h1>
+<p class="lede">Three containers, one Maven command. The application itself is not a container in the dev
+loop; it runs on the host and talks to the HAPI FHIR server on port 8080. Press the button to replay what
+<code>./scripts/start-local.sh</code> prints.</p>
+
+<section>
+  <h2>What Compose brings up</h2>
+  <div class="services">
+    <div class="svc"><b>app-postgres</b> <span class="port">localhost:5432 → 5432</span>
+      <p class="small">postgres:17.11. Application database, named volume <code>app-postgres-data</code>,
+      healthcheck <code>pg_isready</code>. The only database published to the host.</p></div>
+    <div class="svc"><b>fhir-postgres</b> <span class="port">no host port</span>
+      <p class="small">postgres:17.11. FHIR storage, named volume <code>fhir-postgres-data</code>, reachable
+      only by hapi-fhir on the Compose network. Same healthcheck pattern.</p></div>
+    <div class="svc"><b>hapi-fhir</b> <span class="port">localhost:8080 → 8080</span>
+      <p class="small">hapiproject/hapi:v8.12.0-2-tomcat. Waits for fhir-postgres to be healthy, then
+      starts; healthcheck is <code>curl /fhir/metadata</code> with a 180s start period.</p></div>
+  </div>
+  <div class="callout info"><span class="label">Why the tomcat image</span>
+  The default <code>hapiproject/hapi</code> image is distroless and ships no shell or curl, so the
+  <code>/fhir/metadata</code> healthcheck could not run. The <code>-tomcat</code> variant carries curl.</div>
+</section>
+
+<section>
+  <h2>Replay the startup</h2>
+  <div class="controls">
+    <button class="btn" id="runStack">Run ./scripts/start-local.sh</button>
+    <button class="btn ghost" id="resetStack">Reset</button>
+  </div>
+  <div class="terminal" id="stackTerminal"><span class="dim">$ waiting for a run...</span></div>
+</section>
+
+<section>
+  <h2>Commands that matter</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Goal</th><th>Command</th></tr>
+    <tr><td>Start the stack, wait until healthy</td><td><code>./scripts/start-local.sh</code></td></tr>
+    <tr><td>Run the app with the dev profile</td><td><code>./mvnw -pl healthcare-application spring-boot:run -Dspring-boot.run.profiles=dev</code></td></tr>
+    <tr><td>Check the app</td><td><code>curl localhost:8081/actuator/health</code> · FHIR metadata at <code>localhost:8080/fhir/metadata</code></td></tr>
+    <tr><td>Unit tests, no Docker</td><td><code>./mvnw test</code></td></tr>
+    <tr><td>Everything, needs Docker</td><td><code>./scripts/run-tests.sh</code> or <code>./mvnw verify</code></td></tr>
+    <tr><td>Workflow test only, no Docker</td><td><code>./mvnw verify -Dit.test=PatientWorkflowIT</code></td></tr>
+    <tr><td>Stop the stack</td><td><code>docker compose down</code></td></tr>
+    <tr><td>Public sandbox instead of local HAPI</td><td><code>HEALTHCARE_FHIR_BASE_URL=https://hapi.fhir.org/baseR4 ./mvnw -pl healthcare-application spring-boot:run -Dspring-boot.run.profiles=dev</code></td></tr>
+  </table></div>
+  <p class="small muted">The sandbox path only replaces the FHIR server. The dev profile still expects the
+  application PostgreSQL for Flyway, so keep app-postgres running (synthetic data only on the public
+  server).</p>
+</section>
+
+<section>
+  <h2>Test matrix</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Test class</th><th>Kind</th><th>Docker</th><th>What it proves</th></tr>
+    <tr><td><code>DomainArchitectureTest</code></td><td>unit</td><td>No</td><td>domain stays free of Spring, Jakarta, and HAPI</td></tr>
+    <tr><td>FHIR and application unit tests</td><td>unit</td><td>No</td><td>mapping, adapter branches, config binding, controller contract, service logic</td></tr>
+    <tr><td><code>ModuleDependencyIT</code></td><td>architecture</td><td>No</td><td>module direction and cycle freedom</td></tr>
+    <tr><td><code>PatientWorkflowIT</code></td><td>integration</td><td>No</td><td>full workflow against an in-process HAPI server on the same Tomcat, H2 for the app datasource, Flyway off</td></tr>
+    <tr><td><code>DatabaseMigrationIT</code></td><td>integration</td><td>Yes</td><td>Flyway V1+V2 against a disposable <code>postgres:17.11</code> Testcontainer: both tables, constraints, indexes, timestamptz, idempotence</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Configuration and environment</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Profiles</h3>
+      <p class="small"><b>default</b> (<code>application.yml</code>): port 8081, only
+      <code>/actuator/health</code> exposed with details hidden, ECS structured console logs, FHIR base
+      URL <code>http://localhost:8080/fhir</code>.</p>
+      <p class="small"><b>dev</b>: imports <code>./.env</code> and <code>../.env</code> (both optional),
+      binds the datasource from <code>APP_DB_*</code>, FHIR base URL from <code>HAPI_FHIR_PORT</code>.</p>
+      <p class="small"><b>test</b>: inert datasource on port 65535, Flyway disabled. Used by the context
+      and unit tests; the integration test overrides datasource and FHIR URL dynamically instead.</p>
+    </div>
+    <div class="card">
+      <h3>Timeout and TZ notes</h3>
+      <p class="small">HAPI can take a while on first start: healthcheck budget is 180s start period plus
+      18 retries of 10s. Override the script budget with
+      <code>START_LOCAL_TIMEOUT=900 ./scripts/start-local.sh</code>.</p>
+      <p class="small">Both integration tests pin <code>TimeZone.setDefault(UTC)</code> because the
+      PostgreSQL driver forwards the host zone and <code>postgres:17.11</code> rejects legacy aliases such
+      as <code>Asia/Calcutta</code>. If your host still uses one, run tests as
+      <code>TZ=UTC ./scripts/run-tests.sh</code>.</p>
+    </div>
+  </div>
+  <div class="tablewrap" style="margin-top:1rem"><table>
+    <tr><th>Env key</th><th>Placeholder</th><th>Consumed by</th></tr>
+    <tr><td><code>APP_DB_HOST · APP_DB_PORT · APP_DB_NAME · APP_DB_USER · APP_DB_PASSWORD</code></td><td>localhost · 5432 · healthcare · healthcare · change-me-app-password</td><td>Compose app-postgres and the dev datasource</td></tr>
+    <tr><td><code>HAPI_FHIR_IMAGE_TAG</code></td><td>v8.12.0-2-tomcat</td><td>Compose only; no fallback, so .env is required</td></tr>
+    <tr><td><code>HAPI_FHIR_PORT</code></td><td>8080</td><td>Compose port mapping, dev FHIR base URL, start script probe</td></tr>
+    <tr><td><code>FHIR_DB_NAME · FHIR_DB_USER · FHIR_DB_PASSWORD</code></td><td>hapi · hapi · change-me-fhir-password</td><td>fhir-postgres and the HAPI datasource</td></tr>
+    <tr><td><code>APP_PORT</code></td><td>8081</td><td><span class="badge warn">dead</span> Nothing reads it; <code>server.port</code> is hardcoded to 8081</td></tr>
+    <tr><td><code>START_LOCAL_TIMEOUT</code></td><td>600</td><td>start-local.sh only</td></tr>
+    <tr><td><code>HEALTHCARE_FHIR_BASE_URL</code></td><td>https://hapi.fhir.org/baseR4</td><td>Spring relaxed binding to <code>healthcare.fhir.base-url</code></td></tr>
+  </table></div>
+</section>
+
+</main>
+<footer>
+  <p>Interactive explainers for the Healthcare Interoperability Learning Platform. Facts checked against the code and recorded test runs at commit <code>366bdc2</code> (2026-10-08). Pages marked <span class="badge planned">planned</span> describe the target design in <code>plans/</code>, not running code. Generated with the <code>explainer-ladder</code> skill, rung 3.</p>
+</footer>
+
+<script>
+const LINES = [
+ ["$ ./scripts/start-local.sh", ""],
+ ["Starting the local stack (docker compose up -d --wait, timeout 600s)...", "dim"],
+ ["[+] Running 3/3", "dim"],
+ [" ✔ Container app-postgres   Healthy", "ok"],
+ [" ✔ Container fhir-postgres  Healthy", "ok"],
+ [" ✔ Container hapi-fhir      Healthy", "ok"],
+ ["Waiting for the FHIR CapabilityStatement at http://localhost:8080/fhir/metadata ...", "dim"],
+ ["Local stack is up.", "ok"],
+ ["FHIR server:            http://localhost:8080/fhir/metadata", ""],
+ ["Application PostgreSQL: host=localhost port=5432 db=healthcare user=healthcare", ""],
+ ["./mvnw -pl healthcare-application spring-boot:run -Dspring-boot.run.profiles=dev", "prompt"]
+];
+const term = document.getElementById("stackTerminal");
+let timer = null;
+function reset(){
+  if (timer) { clearTimeout(timer); timer = null; }
+  term.innerHTML = '<span class="dim">$ waiting for a run...</span>';
+}
+function run(i){
+  if (i === 0) term.innerHTML = "";
+  if (i >= LINES.length) return;
+  const span = document.createElement("div");
+  span.className = LINES[i][1];
+  span.textContent = LINES[i][0];
+  term.appendChild(span);
+  timer = setTimeout(function(){ run(i + 1); }, i === 0 ? 150 : 650);
+}
+document.getElementById("runStack").addEventListener("click", function(){ reset(); run(0); });
+document.getElementById("resetStack").addEventListener("click", reset);
+</script>
+
+</body>
+</html>

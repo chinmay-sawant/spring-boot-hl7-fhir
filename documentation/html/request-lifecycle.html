@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One POST, five layers · Healthcare Interoperability Learning Platform</title>
+<style>
+:root{
+  --bg:#f6f3ec; --panel:#fffdf8; --ink:#211d16; --ink-soft:#3d382e; --muted:#6f675a;
+  --line:#e4ddcf; --line-strong:#cfc6b4;
+  --clay:#a2502e; --clay-bg:#f7e8df;
+  --sage:#4f6b4a; --sage-bg:#e9efe4;
+  --blue:#3f5d8a; --blue-bg:#e7ecf5;
+  --gold:#8f6b14; --gold-bg:#f6eed6;
+  --plum:#6d4460; --plum-bg:#f2e7ef;
+  --code-bg:#f1ece0;
+  --shadow:0 1px 0 rgba(33,29,22,.05), 0 14px 34px -24px rgba(33,29,22,.45);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.62 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:600;line-height:1.16;letter-spacing:-.01em;margin:0 0 .5rem}
+h1{font-size:clamp(1.9rem,4vw,2.7rem)}
+h2{font-size:clamp(1.35rem,2.6vw,1.7rem);margin-top:0}
+h3{font-size:1.12rem}
+p{margin:.55rem 0}
+a{color:var(--clay);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:currentColor}
+code,kbd,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+code{font-size:.86em;background:var(--code-bg);padding:.12em .38em;border-radius:6px}
+pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;overflow:auto;font-size:.82rem;line-height:1.55;margin:.6rem 0}
+pre.code .c{color:var(--muted)}
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;gap:1.25rem;align-items:baseline;flex-wrap:wrap;
+  padding:.8rem clamp(1rem,4vw,2.5rem); background:rgba(246,243,236,.92);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+}
+.brand{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.02rem;font-weight:600;color:var(--ink);border:0}
+.brand span{color:var(--muted);font-weight:400;font-family:inherit}
+.topbar nav{display:flex;gap:.15rem;flex-wrap:wrap;margin-left:auto}
+.topbar nav a{padding:.3rem .6rem;border-radius:999px;font-size:.84rem;color:var(--ink-soft);border:0}
+.topbar nav a:hover{background:var(--panel);color:var(--ink)}
+.topbar nav a[aria-current="page"]{background:var(--ink);color:#fdfaf3}
+main{max-width:1060px;margin:0 auto;padding:clamp(1.4rem,4vw,3rem) clamp(1rem,4vw,2rem) 3.5rem}
+.kicker{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--clay);font-weight:600;margin:0 0 .45rem}
+.lede{font-size:1.06rem;color:var(--ink-soft);max-width:70ch}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+section{margin:2.6rem 0}
+.badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:.22rem .55rem;border-radius:999px;border:1px solid transparent;vertical-align:middle}
+.badge.built{background:var(--sage-bg);color:var(--sage);border-color:#c9d6bf}
+.badge.planned{background:var(--blue-bg);color:var(--blue);border-color:#c4d0e4}
+.badge.verified{background:var(--gold-bg);color:var(--gold);border-color:#e4d5a4}
+.badge.warn{background:var(--clay-bg);color:var(--clay);border-color:#e7c9b8}
+.badge.stale{background:var(--plum-bg);color:var(--plum);border-color:#dfc9da}
+.grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.15rem;box-shadow:var(--shadow)}
+.card h3{margin-bottom:.3rem}
+.card p{color:var(--ink-soft);font-size:.93rem}
+.card.link{transition:transform .15s ease,box-shadow .15s ease;display:block;color:inherit}
+.card.link:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(33,29,22,.05),0 20px 40px -26px rgba(33,29,22,.55)}
+.card.link{border-bottom-width:1px}
+.stats{display:grid;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:1.2rem 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.85rem 1rem}
+.stat b{display:block;font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.55rem;line-height:1.1}
+.stat span{font-size:.8rem;color:var(--muted)}
+.btn{
+  appearance:none;border:1px solid var(--ink);background:var(--ink);color:#fdfaf3;
+  font:inherit;font-size:.85rem;font-weight:600;padding:.42rem .9rem;border-radius:999px;cursor:pointer;
+}
+.btn:hover{background:#3a342a}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.btn.ghost:hover{background:var(--panel)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.small{font-size:.78rem;padding:.3rem .7rem}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:.15rem;gap:.15rem}
+.seg .btn{border:0;background:transparent;color:var(--ink-soft);border-radius:999px;font-weight:500}
+.seg .btn.active{background:var(--ink);color:#fdfaf3}
+.tabs{display:flex;gap:.3rem;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:1rem}
+.tab{appearance:none;border:0;background:transparent;font:inherit;font-size:.9rem;padding:.5rem .85rem;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--ink);border-bottom-color:var(--clay);font-weight:600}
+.callout{border:1px solid var(--line);border-left:4px solid var(--line-strong);border-radius:10px;background:var(--panel);padding:.75rem .95rem;font-size:.9rem;margin:.8rem 0}
+.callout.info{border-left-color:var(--blue)}
+.callout.good{border-left-color:var(--sage)}
+.callout.warn{border-left-color:var(--clay)}
+.callout .label{font-weight:700;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:.15rem}
+.callout.info .label{color:var(--blue)} .callout.good .label{color:var(--sage)} .callout.warn .label{color:var(--clay)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;background:var(--panel);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#efe9db;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+tr:last-child td{border-bottom:0}
+td code{background:transparent;padding:0}
+.tablewrap{overflow-x:auto;border-radius:10px}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0}
+.chip{font-size:.78rem;padding:.22rem .6rem;border-radius:999px;border:1px solid var(--line-strong);background:var(--panel);cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);color:#fdfaf3;border-color:var(--ink)}
+.cols{display:grid;gap:1rem;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+@media (max-width:820px){.cols{grid-template-columns:1fr}.topbar nav{margin-left:0}}
+.layer-stack{display:flex;flex-direction:column;gap:.45rem}
+.layer{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.55rem .8rem;font-size:.85rem;color:var(--muted);transition:all .18s ease}
+.layer b{display:block;color:var(--ink);font-size:.9rem}
+.layer .tech{font-size:.76rem;color:var(--muted)}
+.layer.active{border-color:var(--clay);background:var(--clay-bg);box-shadow:0 0 0 1px var(--clay) inset}
+.layer.active b{color:var(--clay)}
+.step-detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.15rem;min-height:320px}
+.dots{display:flex;gap:.35rem;margin-bottom:.8rem;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line-strong);border:0;padding:0;cursor:pointer}
+.dot.active{background:var(--clay);transform:scale(1.15)}
+.dot.done{background:var(--sage)}
+.controls{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;justify-content:space-between;margin:1rem 0}
+.flow-call{font-size:.85rem;border:1px dashed var(--line-strong);border-radius:10px;padding:.5rem .7rem;background:var(--code-bg);font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink-soft)}
+.terminal{background:#221f1a;color:#e9e2d4;border-radius:12px;padding:1rem 1.1rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.7;min-height:220px}
+.terminal .prompt{color:#b8d4a0}
+.terminal .dim{color:#8d8577}
+.terminal .ok{color:#c7e3b3}
+.terminal .err{color:#e8a08a}
+.msg{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.84rem;line-height:1.9;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;overflow-x:auto}
+.msg .seg{font-weight:700;color:var(--blue)}
+.msg .field{cursor:pointer;border-radius:4px;padding:0 .1em;border-bottom:1px dashed var(--line-strong)}
+.msg .field:hover,.msg .field.on{background:var(--gold-bg);border-bottom-color:var(--gold);color:var(--gold)}
+.stagecards{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin:1rem 0}
+.stagecard{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.6rem .7rem;cursor:pointer;font-size:.83rem;text-align:left;font-family:inherit;color:var(--ink-soft)}
+.stagecard b{display:block;color:var(--ink);font-size:.87rem}
+.stagecard:hover{border-color:var(--ink)}
+.stagecard.on{border-color:var(--clay);background:var(--clay-bg)}
+.detail-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;min-height:150px}
+.adr-list{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.adr{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.7rem .8rem;cursor:pointer;text-align:left;font-family:inherit}
+.adr b{display:block;color:var(--ink);font-size:.83rem}
+.adr span{font-size:.78rem;color:var(--muted)}
+.adr.on{border-color:var(--plum);background:var(--plum-bg)}
+.timeline{position:relative;margin:1.2rem 0 0;padding-left:1.1rem;border-left:2px solid var(--line-strong)}
+.tl-item{position:relative;padding:.15rem 0 1.1rem 1rem}
+.tl-item::before{content:"";position:absolute;left:-1.55rem;top:.35rem;width:11px;height:11px;border-radius:50%;background:var(--line-strong);border:2px solid var(--bg)}
+.tl-item.done::before{background:var(--sage)}
+.tl-item.now::before{background:var(--gold)}
+.tl-item.plan::before{background:var(--blue)}
+.tl-item h3{margin:0}
+.services{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.svc{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:.7rem .85rem;font-size:.86rem}
+.svc b{display:block;font-size:.9rem}
+.svc .port{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;color:var(--clay)}
+.taglist{display:flex;gap:.35rem;flex-wrap:wrap;margin:.4rem 0}
+.pkg{font-size:.78rem;padding:.18rem .55rem;border-radius:8px;border:1px solid var(--line);background:var(--panel)}
+.pkg.impl{border-color:#c9d6bf;background:var(--sage-bg);color:var(--sage)}
+.pkg.stub{border-style:dashed;color:var(--muted)}
+.pkg .st{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;margin-left:.35rem}
+.svgwrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.8rem;overflow-x:auto}
+.svgwrap svg{display:block;min-width:600px;width:100%;height:auto}
+.svg-box{cursor:pointer}
+.svg-box rect{fill:#fffdf8;stroke:var(--line-strong);stroke-width:1.5;rx:12}
+.svg-box.dim rect{opacity:.45}
+.svg-box.sel rect{stroke:var(--clay);stroke-width:2.5;fill:var(--clay-bg)}
+.svg-box text{font-family:ui-sans-serif,system-ui,sans-serif;fill:var(--ink)}
+.svg-box text.t1{font-size:14px;font-weight:700}
+.svg-box text.t2{font-size:11px;fill:var(--muted)}
+.edge{stroke:var(--line-strong);stroke-width:1.6;fill:none;marker-end:url(#arrow)}
+.edge.dashed{stroke-dasharray:5 4}
+footer{border-top:1px solid var(--line);padding:1.4rem clamp(1rem,4vw,2.5rem);font-size:.82rem;color:var(--muted)}
+footer p{max-width:900px;margin:0 auto}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:.5rem 0}
+.legend b{color:var(--ink)}
+.pulse{stroke:var(--clay);stroke-width:2.5;fill:none;stroke-dasharray:6 8;animation:pulse 1.6s linear infinite}
+@keyframes pulse{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card.link{transition:none}
+  .pulse{animation:none}
+}
+@media print{.topbar nav{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">Healthcare Interop <span>Learning Platform</span></a>
+  <nav aria-label="Explainers">
+    <a href="index.html">Overview</a>
+    <a href="request-lifecycle.html" aria-current="page">Patient flow</a>
+    <a href="hl7-pipeline.html">HL7 pipeline</a>
+    <a href="modules.html">Modules</a>
+    <a href="data.html">Data</a>
+    <a href="operations.html">Operations</a>
+    <a href="roadmap.html">Roadmap</a>
+  </nav>
+</header>
+<main>
+
+<p class="kicker">Explainer 1 · Built today</p>
+<h1>One POST, five layers</h1>
+<p class="lede"><code>POST /api/v1/patients</code> is the one complete workflow in the codebase. Step it
+through the layers with the buttons, or flip the scenario to see how a second registration of the same
+identifier takes the update branch instead. Every fact here comes from the code and the integration test
+that proves the behavior.</p>
+
+<div class="controls">
+  <div class="seg" role="group" aria-label="Scenario">
+    <button class="btn" id="scenarioNew">New identifier</button>
+    <button class="btn" id="scenarioKnown">Known identifier</button>
+  </div>
+  <div class="seg" role="group" aria-label="Step controls">
+    <button class="btn ghost small" id="prevBtn">Previous</button>
+    <button class="btn small" id="nextBtn">Next step</button>
+  </div>
+</div>
+
+<div class="cols">
+  <div>
+    <div class="layer-stack" id="layerStack">
+      <div class="layer" data-layer="rest"><b>REST API</b><span class="tech">PatientController · GlobalExceptionHandler</span></div>
+      <div class="layer" data-layer="service"><b>Application service</b><span class="tech">PatientService · idempotent register</span></div>
+      <div class="layer" data-layer="domain"><b>Domain</b><span class="tech">Patient record · PatientRepositoryPort</span></div>
+      <div class="layer" data-layer="adapter"><b>FHIR adapter</b><span class="tech">FhirPatientAdapter · FhirPatientMapper</span></div>
+      <div class="layer" data-layer="server"><b>HAPI FHIR R4 server</b><span class="tech">localhost:8080/fhir · assigns resource ids</span></div>
+      <div class="layer" data-layer="db" style="opacity:.55"><b>Application PostgreSQL</b><span class="tech">schema only; this flow never touches it</span></div>
+    </div>
+    <p class="small muted" style="margin-top:.7rem">Arrow keys move between steps too.</p>
+  </div>
+  <div class="step-detail">
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <h3 id="stepTitle"></h3>
+    <p id="stepText" class="small"></p>
+    <pre class="code" id="stepCode"></pre>
+    <p class="flow-call" id="stepCall"></p>
+  </div>
+</div>
+
+<section>
+  <h2>The request and the answer</h2>
+  <div class="cols">
+    <div>
+      <h3>Request body</h3>
+      <pre class="code">{
+  &quot;identifierSystem&quot;: &quot;http://hospital.example.org/mrn&quot;,
+  &quot;identifierValue&quot;: &quot;MRN-1001&quot;,
+  &quot;familyName&quot;: &quot;Doe&quot;,
+  &quot;givenName&quot;: &quot;John&quot;,
+  &quot;birthDate&quot;: &quot;1990-05-15&quot;,
+  &quot;gender&quot;: &quot;male&quot;
+}</pre>
+      <p class="small muted">Validation on <code>PatientRequest</code>: <code>identifierSystem</code>,
+      <code>identifierValue</code>, <code>familyName</code>, <code>givenName</code> and <code>gender</code>
+      are <code>@NotBlank</code>; <code>birthDate</code> is <code>@NotNull</code> and
+      <code>@PastOrPresent</code>. Failures become a 400 <code>ProblemDetail</code> before the service runs.</p>
+    </div>
+    <div>
+      <h3>Response</h3>
+      <pre class="code">HTTP/1.1 201 Created
+Location: /api/v1/patients/pat-123
+Content-Type: application/json
+
+{
+  &quot;resourceId&quot;: &quot;pat-123&quot;,
+  &quot;identifierSystem&quot;: &quot;http://hospital.example.org/mrn&quot;,
+  &quot;identifierValue&quot;: &quot;MRN-1001&quot;
+}</pre>
+      <p class="small muted">The body carries only three fields. Domain and FHIR types never cross the REST
+      boundary; demographics are written to FHIR, not echoed back.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Sharp edges worth knowing</h2>
+  <div class="callout warn"><span class="label">Two searches per POST</span>
+  <code>PatientService.register</code> searches by identifier, then <code>FhirPatientAdapter.save</code>
+  searches again before deciding create or update. There is no transaction and no conditional create, so
+  two concurrent first-time POSTs for the same identifier can both take the create branch.</div>
+  <div class="callout warn"><span class="label">The app database stays empty</span>
+  <code>inbound_messages</code> and <code>resource_mappings</code> exist as Flyway DDL, but no production
+  code reads or writes them yet. The patient flow is entirely FHIR REST.</div>
+  <div class="callout warn"><span class="label">500s escape the documented error shape</span>
+  A down FHIR server, more than one identifier match, or a create that returns no id all throw
+  <code>IllegalStateException</code> and surface as Spring Boot's default 500 JSON, not the RFC 7807
+  <code>ProblemDetail</code> used for 400 and 404.</div>
+  <div class="callout warn"><span class="label">gender is only checked for blankness</span>
+  A non-blank but invalid code passes HTTP validation, then fails in
+  <code>FhirPatientMapper</code> with <code>IllegalArgumentException</code> → 500.</div>
+</section>
+
+<section>
+  <h2>Reading one patient back</h2>
+  <div class="cols">
+    <div>
+      <p><code>GET /api/v1/patients/{id}</code> takes a FHIR resource id, never the MRN. The controller
+      calls <code>PatientService.findById</code>, the adapter does a FHIR read
+      (<code>GET /fhir/Patient/{id}</code>), and a missing resource becomes a 404 ProblemDetail:
+      <code>title: "Not Found"</code>, <code>detail: "No patient found with resource id pat-404"</code>.</p>
+    </div>
+    <div>
+      <pre class="code">client.read().resource(Patient.class)
+    .withId(resourceId)
+    .execute();</pre>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Proof from the test suite</h2>
+  <p class="small">Recorded Surefire and Failsafe runs of 2026-10-08: 31 unit tests and 15 integration
+  tests, zero failures.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Test</th><th>What it pins down</th><th>Docker</th></tr>
+    <tr><td><code>PatientWorkflowIT</code></td><td>POST twice with one identifier → same <code>resourceId</code>; FHIR search total stays 1; GET returns the same record</td><td>No</td></tr>
+    <tr><td><code>PatientControllerTest</code></td><td>201 + relative Location, 400 with <code>errors</code> map, 400 for malformed JSON, 200, 404</td><td>No</td></tr>
+    <tr><td><code>PatientServiceTest</code></td><td>new identifier, existing identifier keeps its id, missing id throws</td><td>No</td></tr>
+    <tr><td><code>FhirPatientAdapterTest</code></td><td>single match, no match, multiple matches rejected, create clears client id, update uses <code>Patient/{id}</code></td><td>No</td></tr>
+    <tr><td><code>FhirPatientMapperTest</code></td><td>round trip, absent fields stay absent, exact JSON wire shape</td><td>No</td></tr>
+    <tr><td><code>FhirClientConfigTest</code> + <code>FhirClientPropertiesTest</code></td><td>R4 context, base URL binding, timeouts on the HAPI client</td><td>No</td></tr>
+  </table></div>
+</section>
+
+</main>
+<footer>
+  <p>Interactive explainers for the Healthcare Interoperability Learning Platform. Facts checked against the code and recorded test runs at commit <code>366bdc2</code> (2026-10-08). Pages marked <span class="badge planned">planned</span> describe the target design in <code>plans/</code>, not running code. Generated with the <code>explainer-ladder</code> skill, rung 3.</p>
+</footer>
+
+<script>
+const NEW_STEPS = [
+ {layer:"rest", title:"The request arrives",
+  text:"POST /api/v1/patients with a JSON body. The controller does no business work; it delegates to PatientService and later wraps the result with ResponseEntity.created().",
+  code:"curl -X POST http://localhost:8081/api/v1/patients \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"identifierSystem\":\"http://hospital.example.org/mrn\",\n       \"identifierValue\":\"MRN-1001\",\n       \"familyName\":\"Doe\", \"givenName\":\"John\",\n       \"birthDate\":\"1990-05-15\", \"gender\":\"male\"}'",
+  call:null},
+ {layer:"rest", title:"Bean Validation runs first",
+  text:"@Valid triggers Hibernate Validator before the service is called. Blank identifiers or names, a null birth date, or a future date stop here as a 400 ProblemDetail with a field-to-message errors map.",
+  code:"public ResponseEntity<PatientResponse> register(\n    @Valid @RequestBody PatientRequest request) { ... }",
+  call:"On violation: 400 · detail \"Validation failed for one or more fields\""},
+ {layer:"service", title:"The service looks up the business identifier",
+  text:"Registration is an idempotent upsert keyed on identifierSystem + identifierValue, not a blind create. If a patient already exists, its demographics are overwritten and its resourceId is kept.",
+  code:"Optional<Patient> existing =\n    patientRepository.findByIdentifier(\n        request.identifierSystem(),\n        request.identifierValue());",
+  call:null},
+ {layer:"adapter", title:"The port call reaches the FHIR adapter",
+  text:"PatientRepositoryPort lives in healthcare-domain and imports no framework. FhirPatientAdapter implements it over the HAPI IGenericClient, so the domain stays free of FHIR types.",
+  code:"public interface PatientRepositoryPort {\n    Optional<Patient> findByIdentifier(String system, String value);\n    Optional<Patient> findById(String resourceId);\n    Patient save(Patient patient);\n}",
+  call:null},
+ {layer:"server", title:"FHIR search by identifier",
+  text:"The adapter searches the FHIR server. Zero matches means create; more than one match is treated as a data conflict and throws. The reported Bundle.total is checked as well, so a paged single entry over 3 total matches still fails.",
+  code:"client.search().forResource(Patient.class)\n    .where(Patient.IDENTIFIER.exactly()\n        .systemAndIdentifier(system, value))\n    .returnBundle(Bundle.class).execute();",
+  call:"GET /fhir/Patient?identifier=http://hospital.example.org/mrn|MRN-1001"},
+ {layer:"domain", title:"No match: build a new domain Patient",
+  text:"A new Patient record is created with the request demographics and a null resourceId. The business identifier, not the resource id, is the matching key through the whole flow.",
+  code:"new Patient(system, value, familyName, givenName,\n            birthDate, gender, null)\n// resourceId is null until the FHIR server assigns one",
+  call:null},
+ {layer:"adapter", title:"save() creates on the FHIR server",
+  text:"The adapter searches once more, finds nothing, clears any client-assigned id, and creates. If the server does not return an id, the adapter throws rather than guess one.",
+  code:"fhirPatient.setId((String) null);   // server assigns the id\nclient.create().resource(fhirPatient).execute();",
+  call:"POST /fhir/Patient"},
+ {layer:"rest", title:"201 Created, and the same answer next time",
+  text:"The controller returns 201 with Location: /api/v1/patients/{resourceId} and a three-field body. Re-POSTing the same identifier takes the update branch and returns the same resource id, which PatientWorkflowIT proves by keeping the FHIR search total at 1.",
+  code:"return ResponseEntity.created(\n    URI.create(\"/api/v1/patients/\" + response.resourceId()))\n    .body(response);",
+  call:"201 Created · Location: /api/v1/patients/pat-123"}
+];
+const KNOWN_STEPS = [
+ {layer:"rest", title:"The request arrives",
+  text:"Same endpoint, same body, same validation as the first scenario. The difference shows up when the identifier lookup finds an existing patient.",
+  code:"POST /api/v1/patients\n{ \"identifierSystem\": \"http://hospital.example.org/mrn\",\n  \"identifierValue\": \"MRN-1001\", ... }",
+  call:null},
+ {layer:"rest", title:"Bean Validation runs first",
+  text:"Validation does not care whether the patient exists; it only checks the request shape.",
+  code:"@Valid @RequestBody PatientRequest request",
+  call:"400 ProblemDetail on violation"},
+ {layer:"service", title:"The service finds the existing patient",
+  text:"findByIdentifier returns the stored domain Patient, including the FHIR resourceId assigned by the earlier registration.",
+  code:"Optional<Patient> existing =\n    patientRepository.findByIdentifier(\"http://hospital.example.org/mrn\", \"MRN-1001\");\n// existing.resourceId() = \"pat-123\"",
+  call:null},
+ {layer:"adapter", title:"The port call reaches the FHIR adapter",
+  text:"The port hides where storage lives. The same interface call serves the create and update scenarios.",
+  code:"patientRepository.save(patient);",
+  call:null},
+ {layer:"server", title:"FHIR search finds exactly one match",
+  text:"One entry, total 1. The adapter maps the FHIR Patient back to the domain record; the resourceId comes from the FHIR logical id, never from the MRN.",
+  code:"Optional.of(FhirPatientMapper.toDomain(fhirPatient))",
+  call:"GET /fhir/Patient?identifier=http://hospital.example.org/mrn|MRN-1001"},
+ {layer:"domain", title:"Demographics are refreshed, the id is kept",
+  text:"copyWithDemographics overwrites name, birth date, and gender from the request, but keeps the existing resourceId.",
+  code:"Patient updated = new Patient(\n    existing.identifierSystem(), existing.identifierValue(),\n    request.familyName(), request.givenName(),\n    request.birthDate(), request.gender(),\n    existing.resourceId());",
+  call:null},
+ {layer:"adapter", title:"save() updates the found resource",
+  text:"The adapter sets the qualified id Patient/{resourceId} so the update URL cannot be ambiguous, calls update, and keeps the id if the outcome does not return one.",
+  code:"fhirPatient.setId(\"Patient/\" + resourceId);\nclient.update().resource(fhirPatient).execute();",
+  call:"PUT /fhir/Patient/pat-123"},
+ {layer:"rest", title:"Still 201 Created",
+  text:"A re-registration is answered with 201, not 200, because the controller always reports a successful registration. The resourceId is unchanged, and no duplicate patient is created.",
+  code:"// same body as the first registration\n{ \"resourceId\": \"pat-123\", ... }",
+  call:"201 Created · Location: /api/v1/patients/pat-123"}
+];
+let scenario = "new";
+let current = 0;
+const detail = document.getElementById("stepTitle");
+function steps(){ return scenario === "new" ? NEW_STEPS : KNOWN_STEPS; }
+function render(){
+  const list = steps();
+  const step = list[current];
+  document.querySelectorAll("#layerStack .layer").forEach(function(el){
+    el.classList.toggle("active", el.dataset.layer === step.layer);
+  });
+  detail.textContent = step.title;
+  document.getElementById("stepText").textContent = step.text;
+  const codeEl = document.getElementById("stepCode");
+  if (step.code) { codeEl.style.display = "block"; codeEl.textContent = step.code; }
+  else { codeEl.style.display = "none"; }
+  const callEl = document.getElementById("stepCall");
+  if (step.call) { callEl.style.display = "block"; callEl.textContent = step.call; }
+  else { callEl.style.display = "none"; }
+  const dots = document.getElementById("dots");
+  dots.innerHTML = "";
+  list.forEach(function(_, i){
+    const b = document.createElement("button");
+    b.className = "dot" + (i === current ? " active" : (i < current ? " done" : ""));
+    b.setAttribute("aria-label", "Step " + (i + 1));
+    b.addEventListener("click", function(){ current = i; render(); });
+    dots.appendChild(b);
+  });
+  document.getElementById("prevBtn").disabled = current === 0;
+  document.getElementById("nextBtn").disabled = current === list.length - 1;
+  document.getElementById("scenarioNew").classList.toggle("active", scenario === "new");
+  document.getElementById("scenarioKnown").classList.toggle("active", scenario === "known");
+}
+document.getElementById("prevBtn").addEventListener("click", function(){ if (current > 0){ current--; render(); } });
+document.getElementById("nextBtn").addEventListener("click", function(){ if (current < steps().length - 1){ current++; render(); } });
+document.getElementById("scenarioNew").addEventListener("click", function(){ scenario = "new"; current = 0; render(); });
+document.getElementById("scenarioKnown").addEventListener("click", function(){ scenario = "known"; current = 0; render(); });
+document.addEventListener("keydown", function(e){
+  if (e.key === "ArrowRight" && current < steps().length - 1){ current++; render(); }
+  if (e.key === "ArrowLeft" && current > 0){ current--; render(); }
+});
+render();
+</script>
+
+</body>
+</html>
