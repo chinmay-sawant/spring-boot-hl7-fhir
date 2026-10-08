@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.healthcare</groupId>
+        <artifactId>healthcare-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>healthcare-hl7</artifactId>
+    <name>healthcare-hl7</name>
+    <description>HL7 v2 parsing, validation, routing, acknowledgment, and generation over HAPI HL7v2</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.healthcare</groupId>
+            <artifactId>healthcare-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ca.uhn.hapi</groupId>
+            <artifactId>hapi-base</artifactId>
+            <version>${hapi-hl7v2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ca.uhn.hapi</groupId>
+            <artifactId>hapi-structures-v251</artifactId>
+            <version>${hapi-hl7v2.version}</version>
+        </dependency>
+    </dependencies>
+</project>

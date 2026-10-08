@@ -1,0 +1,91 @@
+# Local infrastructure stack for the Healthcare Interoperability Learning Platform.
+#
+# Start it with:
+#   cp .env.example .env
+#   ./scripts/start-local.sh
+#
+# Pinned images (verified against the registries on 2026-10-08):
+#   postgres:17.11
+#     https://hub.docker.com/_/postgres
+#   hapiproject/hapi:v8.12.0-2-tomcat
+#     https://hub.docker.com/r/hapiproject/hapi
+#
+# The -tomcat HAPI variant is intentional: the default hapiproject/hapi image is
+# distroless and ships no shell or curl, so it cannot run the curl-based
+# /fhir/metadata health check. The -tomcat variant runs the same HAPI FHIR R4
+# JPA server on port 8080 and includes curl through its eclipse-temurin base.
+
+services:
+  # Application database: operational metadata (message processing state,
+  # resource mappings) owned by the Spring Boot application.
+  app-postgres:
+    image: postgres:17.11
+    container_name: app-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${APP_DB_NAME}
+      POSTGRES_USER: ${APP_DB_USER}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+    ports:
+      # The only database published on the host; the Spring Boot app connects here.
+      - "${APP_DB_PORT:-5432}:5432"
+    volumes:
+      - app-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # FHIR database: clinical resource storage owned by the HAPI FHIR server.
+  # No host port on purpose; only the hapi-fhir container can reach it.
+  fhir-postgres:
+    image: postgres:17.11
+    container_name: fhir-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${FHIR_DB_NAME}
+      POSTGRES_USER: ${FHIR_DB_USER}
+      POSTGRES_PASSWORD: ${FHIR_DB_PASSWORD}
+    volumes:
+      - fhir-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # HAPI FHIR R4 JPA server, the source of truth for clinical resources.
+  hapi-fhir:
+    image: hapiproject/hapi:${HAPI_FHIR_IMAGE_TAG}
+    container_name: hapi-fhir
+    restart: unless-stopped
+    depends_on:
+      fhir-postgres:
+        condition: service_healthy
+    environment:
+      hapi.fhir.fhir_version: R4
+      SPRING_DATASOURCE_URL: jdbc:postgresql://fhir-postgres:5432/${FHIR_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${FHIR_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${FHIR_DB_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      # Layers infrastructure/fhir-server/application.yaml over the image defaults.
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/app/config/application.yaml
+    ports:
+      - "${HAPI_FHIR_PORT:-8080}:8080"
+    volumes:
+      - ./infrastructure/fhir-server/application.yaml:/app/config/application.yaml:ro
+    healthcheck:
+      # Probes the FHIR CapabilityStatement, so the stack is only reported
+      # healthy once the R4 server actually answers FHIR requests.
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/fhir/metadata"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 180s
+
+volumes:
+  app-postgres-data:
+  fhir-postgres-data:

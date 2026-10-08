@@ -15,7 +15,7 @@ This plan delivers the foundation for the Healthcare Interoperability Learning P
 At the end of this plan:
 - M1 works: `./scripts/start-local.sh` starts the application PostgreSQL, the FHIR PostgreSQL, and the HAPI FHIR R4 JPA server; the FHIR CapabilityStatement is readable at `http://localhost:8080/fhir/metadata`, both databases report ready, and the Spring Boot application starts with `/actuator/health` returning UP.
 - M2 works: `POST /api/v1/patients` registers a synthetic patient through the HAPI FHIR client using identifier search, `GET /api/v1/patients/{id}` retrieves it, and `GET /fhir/Patient?identifier=...` on the FHIR server shows exactly one matching FHIR Patient after repeated registration.
-- `docs/architecture` contains the system overview, component diagram, sequence diagrams, database design, API conventions, and five ADRs; `docs/architecture/module-dependencies.md` documents the module graph.
+- `documentation/architecture` contains the system overview, component diagram, sequence diagrams, database design, API conventions, and five ADRs; `documentation/architecture/module-dependencies.md` documents the module graph.
 - Five Maven modules build on JDK 17, with ArchUnit tests enforcing that `healthcare-domain` stays free of Spring, web, and infrastructure dependencies.
 - Flyway migrations create `inbound_messages` and `resource_mappings` in the application PostgreSQL only, proven by a Testcontainers migration test.
 
@@ -23,15 +23,15 @@ At the end of this plan:
 
 ### 1.1 Architecture documents
 
-- [ ] `docs/architecture/system-overview.md`: describe the component responsibilities table from init.md section 1, the request and event flows (HIS, EHR, LIS into the HL7 receiver or REST API, through the router and modules, to the FHIR client and HAPI FHIR server, with operational state in the application PostgreSQL), and one Mermaid flowchart. Proof: file exists, every component from the init.md table appears, and the Mermaid block renders in a preview.
-- [ ] `docs/architecture/component-diagram.md`: Mermaid diagram of the simplified hexagonal layout from init.md section 3 (input adapters, application layer, domain, ports, FHIR and database adapters, PostgreSQL and the FHIR server) with a short responsibility note per layer. Proof: file exists and the diagram matches the layering enforced in phase 2.
-- [ ] `docs/architecture/sequence-diagrams.md`: Mermaid sequence diagrams for the ADT A01 admission flow from init.md section 4, including duplicate detection, identifier search (never assuming PID-3 equals the FHIR resource ID), transaction Bundle submission, and acceptance versus application ACK; plus an HL7-to-FHIR data flow diagram. Proof: file exists and both diagrams show the decision branches from init.md.
-- [ ] `docs/architecture/database-design.md`: two-database ownership table from init.md section 5, an ER diagram for `inbound_messages` and `resource_mappings`, and the rule that HAPI FHIR internal tables are never modified directly. Proof: file exists and the ER diagram matches the Flyway migrations from phase 5.
-- [ ] `docs/architecture/api-conventions.md`: document the conventions from init.md sections 7 and 11: `/api/v1` versioning for application APIs, request and response DTOs with Bean Validation, global exception handling with consistent error responses, and separation from the native `/fhir` server APIs. Proof: file exists and the phase 6 endpoints follow it.
+- [ ] `documentation/architecture/system-overview.md`: describe the component responsibilities table from init.md section 1, the request and event flows (HIS, EHR, LIS into the HL7 receiver or REST API, through the router and modules, to the FHIR client and HAPI FHIR server, with operational state in the application PostgreSQL), and one Mermaid flowchart. Proof: file exists, every component from the init.md table appears, and the Mermaid block renders in a preview.
+- [ ] `documentation/architecture/component-diagram.md`: Mermaid diagram of the simplified hexagonal layout from init.md section 3 (input adapters, application layer, domain, ports, FHIR and database adapters, PostgreSQL and the FHIR server) with a short responsibility note per layer. Proof: file exists and the diagram matches the layering enforced in phase 2.
+- [ ] `documentation/architecture/sequence-diagrams.md`: Mermaid sequence diagrams for the ADT A01 admission flow from init.md section 4, including duplicate detection, identifier search (never assuming PID-3 equals the FHIR resource ID), transaction Bundle submission, and acceptance versus application ACK; plus an HL7-to-FHIR data flow diagram. Proof: file exists and both diagrams show the decision branches from init.md.
+- [ ] `documentation/architecture/database-design.md`: two-database ownership table from init.md section 5, an ER diagram for `inbound_messages` and `resource_mappings`, and the rule that HAPI FHIR internal tables are never modified directly. Proof: file exists and the ER diagram matches the Flyway migrations from phase 5.
+- [ ] `documentation/architecture/api-conventions.md`: document the conventions from init.md sections 7 and 11: `/api/v1` versioning for application APIs, request and response DTOs with Bean Validation, global exception handling with consistent error responses, and separation from the native `/fhir` server APIs. Proof: file exists and the phase 6 endpoints follow it.
 
 ### 1.2 Architecture decision records
 
-- [ ] ADR scaffold: `docs/architecture/architecture-decisions/README.md` with an index and `template.md` with Status, Context, Decision, Consequences, and Alternatives sections. Proof: both files exist and every ADR below uses the template headings.
+- [ ] ADR scaffold: `documentation/architecture/architecture-decisions/README.md` with an index and `template.md` with Status, Context, Decision, Consequences, and Alternatives sections. Proof: both files exist and every ADR below uses the template headings.
 - [ ] ADR-0001: modular monolith over microservices, per init.md section 1, including why microservices add unnecessary complexity for this learning project. Proof: file exists with the five template sections.
 - [ ] ADR-0002: simplified hexagonal layering, per init.md section 3, with the rule that domain rules stay independent of transport formats and that mappers hold no business decisions. Proof: file exists with the five template sections.
 - [ ] ADR-0003: the HAPI FHIR server is the source of truth for clinical resources and the application does not maintain a duplicate clinical database, per init.md section 1. Proof: file exists and the phase 5 migrations contain no clinical resource tables.
@@ -40,14 +40,14 @@ At the end of this plan:
 
 ### 1.3 Closure gate
 
-- [ ] Closure gate: `grep -R -E 'TODO|TBD' docs/architecture` returns no unplanned placeholders, every ADR contains the five template headings, and every Mermaid block renders in a local preview. Record the observed result in this row; leave it unchecked if a check fails.
+- [ ] Closure gate: `grep -R -E 'TODO|TBD' documentation/architecture` returns no unplanned placeholders, every ADR contains the five template headings, and every Mermaid block renders in a local preview. Record the observed result in this row; leave it unchecked if a check fails.
 
 ## Phase 2: Maven multi-module skeleton
 
 ### 2.1 Build baseline
 
-- [ ] Version matrix, Spring Boot: resolve the latest stable Spring Boot 3.x release, confirm it supports JDK 17, and record the exact resolved version with its source link in `docs/architecture/dependency-versions.md`. Proof: the doc exists and lists the artifact and resolved version; never write a guessed version into any file.
-- [ ] Version matrix, interoperability libraries: verify mutually compatible current releases of HAPI HL7v2 (`hapi-base` plus the v2.5.1 structures artifact), HAPI FHIR R4 (`hapi-fhir-client`, `hapi-fhir-structures-r4`), Flyway (core plus the PostgreSQL module required by that major version), and Testcontainers by reading each project's compatibility notes; record each resolved version with its source link in `docs/architecture/dependency-versions.md`. Proof: the doc exists; the parent POM resolution check below shows only versions from the doc.
+- [ ] Version matrix, Spring Boot: resolve the latest stable Spring Boot 3.x release, confirm it supports JDK 17, and record the exact resolved version with its source link in `documentation/architecture/dependency-versions.md`. Proof: the doc exists and lists the artifact and resolved version; never write a guessed version into any file.
+- [ ] Version matrix, interoperability libraries: verify mutually compatible current releases of HAPI HL7v2 (`hapi-base` plus the v2.5.1 structures artifact), HAPI FHIR R4 (`hapi-fhir-client`, `hapi-fhir-structures-r4`), Flyway (core plus the PostgreSQL module required by that major version), and Testcontainers by reading each project's compatibility notes; record each resolved version with its source link in `documentation/architecture/dependency-versions.md`. Proof: the doc exists; the parent POM resolution check below shows only versions from the doc.
 - [ ] Maven Wrapper: add `mvnw`, `mvnw.cmd`, and `.mvn/wrapper/maven-wrapper.properties` pinned to a current stable Maven distribution compatible with JDK 17. Proof: `./mvnw -v` prints the pinned Maven version and `Java version: 17`.
 - [ ] Repository hygiene: add `.gitignore` covering `.env`, `target/`, IDE files, and build logs. Proof: `grep -q '^.env$' .gitignore` matches and a local `.env` copy stays untracked.
 - [ ] Parent POM: create `pom.xml` at the repo root with groupId `com.example.healthcare`, artifactId `healthcare-platform`, packaging `pom`, modules `healthcare-domain`, `healthcare-hl7`, `healthcare-fhir`, `healthcare-application`, and `healthcare-integration-tests`, `maven.compiler.release` 17, Spring Boot dependency management at the verified version, and plugin management for the compiler, Surefire, and Failsafe. Proof: `./mvnw -q validate` succeeds and `./mvnw dependency:tree | grep spring-boot` shows the version recorded in the matrix doc.
@@ -64,7 +64,7 @@ At the end of this plan:
 
 - [ ] Domain purity test: `healthcare-domain/src/test/java/com/example/healthcare/domain/DomainArchitectureTest.java` with ArchUnit asserts classes in `com.example.healthcare.domain` depend only on the JDK and their own packages, with no `org.springframework`, `jakarta`, or `ca.uhn` imports. Proof: `./mvnw -pl healthcare-domain test` passes and its rule set covers `org.springframework`, `jakarta`, and `ca.uhn`.
 - [ ] Module direction test: `healthcare-integration-tests/src/test/java/com/example/healthcare/architecture/ModuleDependencyTest.java` asserts `healthcare-domain` depends on nothing, `healthcare-hl7` and `healthcare-fhir` depend on the domain but not on each other, `healthcare-application` may depend on all three, and no package cycles exist. Proof: `./mvnw -pl healthcare-integration-tests -am verify -Dit.test=ModuleDependencyTest` passes.
-- [ ] Module dependency diagram: `docs/architecture/module-dependencies.md` with a Mermaid graph of the five modules and the rule list the ArchUnit tests enforce. Proof: file exists and its edges match `ModuleDependencyTest`.
+- [ ] Module dependency diagram: `documentation/architecture/module-dependencies.md` with a Mermaid graph of the five modules and the rule list the ArchUnit tests enforce. Proof: file exists and its edges match `ModuleDependencyTest`.
 
 ### 2.4 Closure gate
 
@@ -76,7 +76,7 @@ At the end of this plan:
 ### 3.1 Docker Compose services
 
 - [ ] Environment template: `.env.example` defines keys for the application PostgreSQL (database, user, password placeholder), the FHIR PostgreSQL, the HAPI FHIR server image tag and port, and the application port; it contains no real credentials or patient data. Proof: `cp .env.example .env && docker compose config -q` succeeds.
-- [ ] Application PostgreSQL service: `docker-compose.yml` defines `app-postgres` on the official `postgres` image pinned to a tag verified at implementation time, a named volume `app-postgres-data`, and a `pg_isready` health check; record the chosen tag in `docs/architecture/dependency-versions.md`. Proof: `docker compose up -d app-postgres --wait` exits 0 and `docker compose exec app-postgres pg_isready` reports accepting connections.
+- [ ] Application PostgreSQL service: `docker-compose.yml` defines `app-postgres` on the official `postgres` image pinned to a tag verified at implementation time, a named volume `app-postgres-data`, and a `pg_isready` health check; record the chosen tag in `documentation/architecture/dependency-versions.md`. Proof: `docker compose up -d app-postgres --wait` exits 0 and `docker compose exec app-postgres pg_isready` reports accepting connections.
 - [ ] FHIR PostgreSQL service: `fhir-postgres` with its own pinned image tag, named volume `fhir-postgres-data`, and health check; it is not exposed on a host port and is reachable only from the HAPI FHIR server container; record the chosen tag in the version matrix doc. Proof: `docker compose up -d fhir-postgres --wait` exits 0.
 - [ ] HAPI FHIR R4 JPA server service: `hapi-fhir` on the official `hapiproject/hapi` image pinned to a verified tag, with `hapi.fhir.fhir_version=R4`, datasource environment pointing at `fhir-postgres`, `depends_on` with `condition: service_healthy`, host port 8080, a health check that probes `/fhir/metadata` with a tool present in the pinned image, and server settings in `infrastructure/fhir-server/application.yaml` mounted read-only; record the tag in the version matrix doc. Proof: `docker compose up -d hapi-fhir --wait` exits 0 and `curl -sf http://localhost:8080/fhir/metadata` returns a CapabilityStatement.
 - [ ] Start script: `scripts/start-local.sh` runs `docker compose up -d --wait`, polls `http://localhost:8080/fhir/metadata` until HTTP 200, prints the FHIR server URL, the application PostgreSQL connection details, and the next command, and exits non-zero on timeout. Proof: `chmod +x scripts/start-local.sh && ./scripts/start-local.sh` succeeds from a `docker compose down -v` state.
@@ -112,7 +112,7 @@ At the end of this plan:
 
 ### 5.1 Dependencies and wiring
 
-- [ ] Persistence dependencies: add `spring-boot-starter-jdbc`, Flyway core plus the PostgreSQL support module required by the pinned Flyway major version, and the PostgreSQL JDBC driver at runtime scope to `healthcare-application/pom.xml`, all resolved through parent POM dependency management and recorded in `docs/architecture/dependency-versions.md`. Proof: `./mvnw -pl healthcare-application -am dependency:tree` shows the recorded versions with no conflicts.
+- [ ] Persistence dependencies: add `spring-boot-starter-jdbc`, Flyway core plus the PostgreSQL support module required by the pinned Flyway major version, and the PostgreSQL JDBC driver at runtime scope to `healthcare-application/pom.xml`, all resolved through parent POM dependency management and recorded in `documentation/architecture/dependency-versions.md`. Proof: `./mvnw -pl healthcare-application -am dependency:tree` shows the recorded versions with no conflicts.
 - [ ] Datasource wiring: `application-dev.yml` sets `spring.datasource.*` for the application PostgreSQL from `.env` key names and keeps `spring.flyway.locations` at the default `classpath:db/migration`; nothing in any module points application JDBC or Flyway at the FHIR database. Proof: review of `application-*.yml` shows no FHIR database JDBC URL, and the closure gate below proves runtime behavior.
 
 ### 5.2 Migrations
@@ -143,7 +143,7 @@ At the end of this plan:
 ### 6.3 REST API
 
 - [ ] Controller: `healthcare-application/src/main/java/com/example/healthcare/patient/PatientController.java` exposes `POST /api/v1/patients` returning 201 with a Location header containing the FHIR resource id, and `GET /api/v1/patients/{id}` returning 200 or 404; the controller delegates to `PatientService` and holds no business logic. Proof: `PatientControllerTest` with MockMvc covers 201, 400 on invalid input, and 404.
-- [ ] Error handling: `GlobalExceptionHandler` returns `ProblemDetail` responses with consistent fields for Bean Validation failures and missing patients, following `docs/architecture/api-conventions.md`. Proof: assertions in `PatientControllerTest`.
+- [ ] Error handling: `GlobalExceptionHandler` returns `ProblemDetail` responses with consistent fields for Bean Validation failures and missing patients, following `documentation/architecture/api-conventions.md`. Proof: assertions in `PatientControllerTest`.
 
 ### 6.4 Integration test
 

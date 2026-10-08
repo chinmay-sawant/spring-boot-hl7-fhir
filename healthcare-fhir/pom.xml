@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.healthcare</groupId>
+        <artifactId>healthcare-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>healthcare-fhir</artifactId>
+    <name>healthcare-fhir</name>
+    <description>FHIR R4 client adapters, mapping, terminology, validation, and transactions over HAPI FHIR</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.example.healthcare</groupId>
+            <artifactId>healthcare-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Phase 4.2: the FHIR client configuration uses Spring Boot
+             @ConfigurationProperties binding and @Bean wiring, and its tests
+             need JUnit, so the framework must be on this module's classpath. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-client</artifactId>
+            <version>${hapi-fhir.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-structures-r4</artifactId>
+            <version>${hapi-fhir.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

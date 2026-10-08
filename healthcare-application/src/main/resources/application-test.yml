@@ -1,0 +1,12 @@
+# Test profile: context and unit tests run without infrastructure. The
+# datasource URL is deliberately inert and Flyway is disabled, so no connection
+# is ever opened; the FHIR client beans are created without contacting the FHIR
+# server.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:65535/healthcare-inert
+    username: test
+    password: test
+  flyway:
+    enabled: false

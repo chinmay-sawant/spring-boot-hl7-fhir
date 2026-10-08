@@ -1,0 +1,29 @@
+# Server settings for the local HAPI FHIR R4 JPA server.
+#
+# Mounted read-only into the hapi-fhir container at /app/config/application.yaml
+# and loaded on top of the image's built-in defaults through
+# SPRING_CONFIG_ADDITIONAL_LOCATION. Environment variables set in
+# docker-compose.yml (datasource credentials, hapi.fhir.fhir_version=R4) take
+# precedence over anything defined here, so no secrets belong in this file.
+
+spring:
+  jpa:
+    properties:
+      hibernate:
+        # The server stores everything in fhir-postgres, never in H2 or files.
+        dialect: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+        search:
+          # Local learning stack: no Lucene/Elasticsearch index needed.
+          enabled: false
+
+hapi:
+  fhir:
+    # Public address the server reports for itself, e.g. in the CapabilityStatement.
+    server_address: http://localhost:8080/fhir
+    default_encoding: JSON
+    default_pretty_print: true
+    tester:
+      home:
+        name: Local HAPI FHIR R4 Server
+        server_address: http://localhost:8080/fhir
+        fhir_version: R4

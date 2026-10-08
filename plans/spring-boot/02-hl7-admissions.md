@@ -52,7 +52,7 @@ This plan delivers the HL7 v2 pipeline and the ADT A04 registration, ADT A08 upd
 ### 2.2 Acknowledgment generation
 
 - [ ] Implement `AcknowledgmentGenerator` in `healthcare-hl7/src/main/java/com/example/healthcare/hl7/acknowledgment/` producing HL7 v2.5.1 ACK messages: MSH with sending and receiving fields swapped, MSH-9 `ACK`, a new MSH-10, MSA-1 `AA`, `AE`, or `AR` by outcome, and MSA-2 echoing the original MSH-10. Proof: unit test builds an ACK for each outcome and asserts segments and the echoed control ID.
-- [ ] Add acknowledgment mode configuration (`hl7.ack.mode`, values original and enhanced) and wire both modes through `MessageProcessingService`: original returns a single application ACK carrying the final processing result; enhanced returns an acceptance ACK after validation and persistence, followed by a final ACK carrying the application outcome, so acceptance never claims processing success. Document both modes in `docs/hl7/acknowledgments.md`. Proof: unit tests assert one ACK in original mode and two ACKs with the acceptance first in enhanced mode.
+- [ ] Add acknowledgment mode configuration (`hl7.ack.mode`, values original and enhanced) and wire both modes through `MessageProcessingService`: original returns a single application ACK carrying the final processing result; enhanced returns an acceptance ACK after validation and persistence, followed by a final ACK carrying the application outcome, so acceptance never claims processing success. Document both modes in `documentation/hl7/acknowledgments.md`. Proof: unit tests assert one ACK in original mode and two ACKs with the acceptance first in enhanced mode.
 - [ ] Add acknowledgment tests covering a valid message (`AA`), an invalid message (`AE` or `AR` with error code and summary), and a duplicate message (`AA` with MSA-2 equal to the original MSH-10). Proof: the test class passes under `./mvnw -pl healthcare-hl7 -am test`.
 
 ### 2.3 Inbound message persistence
@@ -91,11 +91,11 @@ This plan delivers the HL7 v2 pipeline and the ADT A04 registration, ADT A08 upd
 ### 4.1 Patient mapping
 
 - [ ] Implement `PatientHl7Mapper` in `healthcare-fhir/src/main/java/com/example/healthcare/fhir/mapper/` mapping PID-3 to Patient.identifier with the assigning authority as system and the identifier value as value, PID-5 to Patient.name (family and given), PID-7 to Patient.birthDate, and PID-8 to Patient.gender. Absent optional fields leave elements absent; a missing PID-3 value stays a validation error, never a null identifier. Proof: mapper unit tests for a complete PID, a PID without PID-5 or PID-7, and the A04 sample.
-- [ ] Document the PID mapping decisions in `docs/workflows/patient-registration.md`. Proof: the page lists the PID-3, PID-5, PID-7, and PID-8 rows.
+- [ ] Document the PID mapping decisions in `documentation/workflows/patient-registration.md`. Proof: the page lists the PID-3, PID-5, PID-7, and PID-8 rows.
 
 ### 4.2 Patient matching and resource mappings
 
-- [ ] Implement the patient matching policy in `healthcare-application/src/main/java/com/example/healthcare/patient/`: search the FHIR R4 server by identifier system and value before creating anything; a single match reuses the existing Patient, no match creates one, and multiple matches fail the message with a definite error rather than guessing. Document the policy in `docs/workflows/patient-registration.md`. Proof: unit tests with a mocked FHIR client for match, no match, and multiple matches.
+- [ ] Implement the patient matching policy in `healthcare-application/src/main/java/com/example/healthcare/patient/`: search the FHIR R4 server by identifier system and value before creating anything; a single match reuses the existing Patient, no match creates one, and multiple matches fail the message with a definite error rather than guessing. Document the policy in `documentation/workflows/patient-registration.md`. Proof: unit tests with a mocked FHIR client for match, no match, and multiple matches.
 - [ ] Implement the resource mapping repository and service in `healthcare-application` over the plan 1 `resource_mappings` table, keyed uniquely by (source_system, source_identifier_system, source_identifier_value, fhir_resource_type). Proof: test asserts one row per key and an idempotent second save.
 
 ### 4.3 A04 handler and FHIR transaction
@@ -105,7 +105,7 @@ This plan delivers the HL7 v2 pipeline and the ADT A04 registration, ADT A08 upd
 
 ### 4.4 ADT A08 patient update
 
-- [ ] Implement the A08 handler in `healthcare-application/src/main/java/com/example/healthcare/ingestion/`: map PID fields through `PatientHl7Mapper`, locate the existing Patient by identifier through the matching policy, and update it; when no Patient matches, fail with a definite error instead of registering silently, and document the policy in `docs/workflows/patient-registration.md`. Proof: integration test submits `samples/hl7/adt-a08.hl7` after an A04 and asserts one Patient with the updated demographics.
+- [ ] Implement the A08 handler in `healthcare-application/src/main/java/com/example/healthcare/ingestion/`: map PID fields through `PatientHl7Mapper`, locate the existing Patient by identifier through the matching policy, and update it; when no Patient matches, fail with a definite error instead of registering silently, and document the policy in `documentation/workflows/patient-registration.md`. Proof: integration test submits `samples/hl7/adt-a08.hl7` after an A04 and asserts one Patient with the updated demographics.
 - [ ] Make A08 replay safe: retransmission with the same MSH-10 answers from the duplicate path, and a repeated update with a new MSH-10 keeps one Patient and one mapping row. Proof: replay test asserts one Patient and two `AA` outcomes.
 
 ### 4.5 Closure gate
@@ -116,7 +116,7 @@ This plan delivers the HL7 v2 pipeline and the ADT A04 registration, ADT A08 upd
 
 ### 5.1 Encounter mapping and identity
 
-- [ ] Implement `EncounterHl7Mapper` in `healthcare-fhir/src/main/java/com/example/healthcare/fhir/mapper/` mapping PV1-2 to `Encounter.class` through a documented code table (for example I to inpatient, O to outpatient, E to emergency) and mapping the hospital visit identifier to Encounter.identifier with the assigning authority as system. Document the code table and the visit identifier field assumption in `docs/workflows/patient-admission.md`. Proof: mapper unit tests for each class code and the A01 sample.
+- [ ] Implement `EncounterHl7Mapper` in `healthcare-fhir/src/main/java/com/example/healthcare/fhir/mapper/` mapping PV1-2 to `Encounter.class` through a documented code table (for example I to inpatient, O to outpatient, E to emergency) and mapping the hospital visit identifier to Encounter.identifier with the assigning authority as system. Document the code table and the visit identifier field assumption in `documentation/workflows/patient-admission.md`. Proof: mapper unit tests for each class code and the A01 sample.
 - [ ] Preserve the visit identifier on Encounter create and record the mapping in resource_mappings under the encounter resource type. Proof: unit test asserts the identifier is present and the mapping key uses the visit identifier.
 
 ### 5.2 Admission service
@@ -137,7 +137,7 @@ This plan delivers the HL7 v2 pipeline and the ADT A04 registration, ADT A08 upd
 ### 6.1 Transfer handling
 
 - [ ] Implement the transfer use case in `EncounterService`: locate the Encounter by visit identifier, add a new Encounter.location entry with the ward, room, and bed plus a period start, and keep all prior location entries as history. Proof: integration test sends `samples/hl7/adt-a02.hl7` after an admission and asserts two location entries with the first preserved.
-- [ ] Implement missing and out-of-order detection: when the Encounter is absent or already finished, perform no FHIR writes and record a definite error in error_code and error_summary on the inbound row, as the interim policy documented in `docs/workflows/patient-transfer.md`. That page notes that plan 4 replaces the interim handling with the QUARANTINED state machine. Proof: tests for a missing Encounter and a transfer against a finished Encounter assert no FHIR write and the recorded error.
+- [ ] Implement missing and out-of-order detection: when the Encounter is absent or already finished, perform no FHIR writes and record a definite error in error_code and error_summary on the inbound row, as the interim policy documented in `documentation/workflows/patient-transfer.md`. That page notes that plan 4 replaces the interim handling with the QUARANTINED state machine. Proof: tests for a missing Encounter and a transfer against a finished Encounter assert no FHIR write and the recorded error.
 
 ### 6.2 Discharge handling
 
@@ -158,7 +158,7 @@ This plan delivers the HL7 v2 pipeline and the ADT A04 registration, ADT A08 upd
 ### 7.2 Patient timeline
 
 - [ ] Add `GET /api/v1/patients/{id}/timeline` in `healthcare-application/src/main/java/com/example/healthcare/patient/PatientController` assembling registration, admissions, transfers, and discharge in chronological order from FHIR R4 resources and returning a response DTO. Proof: MockMvc test asserts ordered entries for a patient that went through ADT A01, A02, and A03.
-- [ ] Update `docs/api/openapi.yaml` with the endpoints added in this phase and the message submission and status endpoints from phase 3. Proof: the OpenAPI file lists all five endpoints with request and response shapes.
+- [ ] Update `documentation/api/openapi.yaml` with the endpoints added in this phase and the message submission and status endpoints from phase 3. Proof: the OpenAPI file lists all five endpoints with request and response shapes.
 
 ### 7.3 Closure gate
 
@@ -166,7 +166,7 @@ This plan delivers the HL7 v2 pipeline and the ADT A04 registration, ADT A08 upd
 
 ## Dependencies
 
-- Must exist first: plan 1 (`plans/spring-boot/01-foundation.md`) provides the Maven multi-module skeleton on JDK 17 with the verified Spring Boot 3.x baseline, docker-compose PostgreSQL and HAPI FHIR R4 server (M1), Flyway migrations creating `inbound_messages` and `resource_mappings` with their unique constraints, the healthcare-fhir client baseline and Patient CRUD (M2), and the docs tree referenced by rows here.
+- Must exist first: plan 1 (`plans/spring-boot/01-foundation.md`) provides the Maven multi-module skeleton on JDK 17 with the verified Spring Boot 3.x baseline, docker-compose PostgreSQL and HAPI FHIR R4 server (M1), Flyway migrations creating `inbound_messages` and `resource_mappings` with their unique constraints, the healthcare-fhir client baseline and Patient CRUD (M2), and the documentation tree referenced by rows here.
 - This plan hands to plan 3 (`plans/spring-boot/03-clinical-labs.md`): the parser, validator, router, ACK generator, MLLP receiver, inbound message persistence, processing status API, FHIR transaction client, and resource mapping persistence, plus the unsupported-message route where an ORU R01 handler registers. Plan 3 owns clinical resources and laboratory workflows.
 - This plan hands to plan 4 (`plans/spring-boot/04-reliability-ops.md`): the interim missing and out-of-order encounter policy and its error recording to harden into the QUARANTINED state machine, duplicate detection to extend with retry, backoff, and restart replay (M7), and the receiver endpoints to instrument. Plan 4 owns retry depth, quarantine, dashboard, simulator, security, and observability.
 - ADT A08 is covered in phase 4.4 as a patient update, keeping init.md section 5's starting message list inside the patient management scope.

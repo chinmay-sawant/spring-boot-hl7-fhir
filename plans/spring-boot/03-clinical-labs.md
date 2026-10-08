@@ -73,7 +73,7 @@ This plan delivers the clinical data and laboratory half of the platform: LOINC-
 
 ### 2.5 Mapping documentation
 
-- [ ] Document the ORU R01 mapping in `docs/hl7/message-types.md`: required segments, the OBR and OBX to FHIR field table, status mapping, unit handling, effective time fallback, and linkage rules, following init.md section 5 and section 16. Proof: the section exists and matches the tests in 2.2 and 2.3.
+- [ ] Document the ORU R01 mapping in `documentation/hl7/message-types.md`: required segments, the OBR and OBX to FHIR field table, status mapping, unit handling, effective time fallback, and linkage rules, following init.md section 5 and section 16. Proof: the section exists and matches the tests in 2.2 and 2.3.
 
 ### 2.6 Closure gate
 
@@ -110,7 +110,7 @@ This plan delivers the clinical data and laboratory half of the platform: LOINC-
 ### 4.1 Clinical terminology helpers
 
 - [ ] Extend `healthcare-fhir/src/main/java/com/example/healthcare/fhir/terminology/` with SNOMED CT (`http://snomed.info/sct`) and RxNorm (`http://www.nlm.nih.gov/research/umls/rxnorm`) coding helpers mirroring `LoincCodingHelper`; blank codes are rejected. Proof: unit tests assert system, code, and display for both.
-- [ ] Append clinical terminology usage to `docs/fhir/terminology.md`: LOINC for observations, SNOMED CT for AllergyIntolerance and Condition codes, RxNorm for MedicationRequest medication coding, with a cross-reference to the ORU mapping doc. Proof: section exists.
+- [ ] Append clinical terminology usage to `documentation/fhir/terminology.md`: LOINC for observations, SNOMED CT for AllergyIntolerance and Condition codes, RxNorm for MedicationRequest medication coding, with a cross-reference to the ORU mapping doc. Proof: section exists.
 
 ### 4.2 AllergyIntolerance
 

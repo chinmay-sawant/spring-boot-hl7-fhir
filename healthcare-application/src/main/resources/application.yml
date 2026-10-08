@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: healthcare-application
+
+server:
+  # 8081 keeps the application clear of the HAPI FHIR server on 8080.
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+healthcare:
+  fhir:
+    # Local HAPI FHIR R4 JPA server from docker-compose.yml. The dev profile
+    # keeps this value; other environments override it.
+    base-url: http://localhost:8080/fhir
+
+# One structured JSON record per console log line (Elastic Common Schema).
+# No PHI is logged by default.
+logging:
+  structured:
+    format:
+      console: ecs

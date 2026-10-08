@@ -1,0 +1,27 @@
+# Environment files (real values stay local)
+.env
+.env.*
+!.env.example
+
+# Build output
+target/
+build/
+out/
+
+# IDE and editor files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+*.swp
+*~
+
+# Logs and OS cruft
+*.log
+logs/
+.DS_Store
+Thumbs.db

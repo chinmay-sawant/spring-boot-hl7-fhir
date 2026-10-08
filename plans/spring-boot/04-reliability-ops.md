@@ -24,9 +24,9 @@ This is plan 4 of 4. It takes the working HL7 ingestion and clinical workflows f
 ### 1.1 Toolchain and BOM resolution
 
 - [ ] Confirm the root `pom.xml` targets JDK 17 (`java.version` and `maven.compiler.release` set to 17 per user direction, overriding Java 21 in init.md) and that `./mvnw -v` reports a matching JDK; proof is both outputs recorded in this plan.
-- [ ] Confirm the Spring Boot 3.x version pinned by plan 01 is still the latest stable release at implementation time, update the pin only if it drifted, and record the resolved version in this plan and in `docs/architecture/dependency-versions.md`; proof is `./mvnw -q help:evaluate -Dexpression=project.parent.version`.
-- [ ] Confirm the HAPI FHIR R4 client and model artifacts pinned by plan 01 still work with the selected Spring Boot 3.x and Spring Framework generation, update the pin only on drift, and record the result in this plan and in `docs/architecture/dependency-versions.md`; proof is `./mvnw -q dependency:tree -Dincludes=ca.uhn.hapi.fhir`.
-- [ ] Confirm Thymeleaf, Micrometer with Actuator, and Testcontainers resolve from Spring Boot dependency management without version overrides, and add explicit versions only where a managed version is incompatible, and append the resolved versions to `docs/architecture/dependency-versions.md`; proof is `./mvnw -q dependency:tree` entries for Thymeleaf, Micrometer, and Testcontainers.
+- [ ] Confirm the Spring Boot 3.x version pinned by plan 01 is still the latest stable release at implementation time, update the pin only if it drifted, and record the resolved version in this plan and in `documentation/architecture/dependency-versions.md`; proof is `./mvnw -q help:evaluate -Dexpression=project.parent.version`.
+- [ ] Confirm the HAPI FHIR R4 client and model artifacts pinned by plan 01 still work with the selected Spring Boot 3.x and Spring Framework generation, update the pin only on drift, and record the result in this plan and in `documentation/architecture/dependency-versions.md`; proof is `./mvnw -q dependency:tree -Dincludes=ca.uhn.hapi.fhir`.
+- [ ] Confirm Thymeleaf, Micrometer with Actuator, and Testcontainers resolve from Spring Boot dependency management without version overrides, and add explicit versions only where a managed version is incompatible, and append the resolved versions to `documentation/architecture/dependency-versions.md`; proof is `./mvnw -q dependency:tree` entries for Thymeleaf, Micrometer, and Testcontainers.
 
 ### 1.2 Closure gate
 
@@ -139,8 +139,8 @@ Development-safe controls plus documented production requirements, per init.md s
 
 ### 5.3 Documentation and M9 evidence
 
-- [ ] Write `docs/security/oauth2-and-smart-on-fhir.md` covering OAuth 2.0, SMART on FHIR, and role-based permissions, and `docs/security/hipaa-fundamentals.md` covering audit logging and sensitive-data redaction.
-- [ ] Write `docs/security/production-requirements.md` separating production security requirements from the educational development configuration, including secret management and transport security.
+- [ ] Write `documentation/security/oauth2-and-smart-on-fhir.md` covering OAuth 2.0, SMART on FHIR, and role-based permissions, and `documentation/security/hipaa-fundamentals.md` covering audit logging and sensitive-data redaction.
+- [ ] Write `documentation/security/production-requirements.md` separating production security requirements from the educational development configuration, including secret management and transport security.
 - [ ] Record M9 evidence in this plan: authentication (401 without credentials, 200 with), validation (an invalid HL7 message rejected and an invalid FHIR resource recorded as a validation error), and auditing (an audit record written for the access and for the processing event); keep the row `[ ]` until the transcript is recorded.
 
 ### 5.4 Closure gate
@@ -190,14 +190,14 @@ Closure work: run the 12 scenarios from init.md section 15 as end-to-end tests, 
 ### 7.2 Documentation set
 
 - [ ] Write `README.md` with prerequisites, start commands, the demo path, and links to the other guides.
-- [ ] Complete `docs/architecture` with the overview, component diagram, sequence diagrams, database ER diagram, and FHIR resource relationship diagram, all in Mermaid.
-- [ ] Complete the HL7 mapping documentation under `docs/hl7` and `docs/fhir` and keep `docs/api/openapi.yaml` in step with the controllers.
-- [ ] Write `docs/deployment.md` covering local Docker Compose startup, environment variables, and the difference between educational and production deployment.
-- [ ] Write `docs/testing.md` covering how to run unit, integration, and end-to-end tests, and `docs/troubleshooting.md` covering retries, quarantines, restart recovery, reconciliation, FHIR connectivity, and seeder failures.
+- [ ] Complete `documentation/architecture` with the overview, component diagram, sequence diagrams, database ER diagram, and FHIR resource relationship diagram, all in Mermaid.
+- [ ] Complete the HL7 mapping documentation under `documentation/hl7` and `documentation/fhir` and keep `documentation/api/openapi.yaml` in step with the controllers.
+- [ ] Write `documentation/deployment.md` covering local Docker Compose startup, environment variables, and the difference between educational and production deployment.
+- [ ] Write `documentation/testing.md` covering how to run unit, integration, and end-to-end tests, and `documentation/troubleshooting.md` covering retries, quarantines, restart recovery, reconciliation, FHIR connectivity, and seeder failures.
 
 ### 7.3 Final closure gate and demo script
 
-- [ ] Write `docs/demo-script.md` with exact commands for milestones M1 through M9 from init.md section 11, the expected observation per step, and the evidence to capture.
+- [ ] Write `documentation/demo-script.md` with exact commands for milestones M1 through M9 from init.md section 11, the expected observation per step, and the evidence to capture.
 - [ ] Execute the demo script on a clean checkout: `./mvnw -q verify`, `docker-compose up`, seed, submit ADT A04 and A01, transfer and discharge, record vitals and laboratory results, restart and replay for M7, walk the dashboard for M8, and demonstrate security and observability for M9; record pass or fail per milestone in this plan.
 - [ ] Audit this plan file: mark rows `[x]` only where proof is recorded, mark deferred work `[~]` with the reason and next gate, and leave failed rows `[ ]`; the final status of this file is the closing evidence.
 
