@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theory: HL7 · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="../index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="../index.html">Overview</a>
+    <a href="../walkthrough.html">Walkthrough</a>
+    <a href="../endpoints.html">Endpoints</a>
+    <a href="../data-flow.html">Data flow</a>
+    <a href="../concepts.html">FHIR vs HL7v2</a>
+    <a href="../practice.html">Practice</a>
+    <a href="hl7.html" aria-current="page">Theory: HL7</a>
+    <a href="fhir.html">Theory: FHIR</a>
+    <a href="together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Theory · HL7</p>
+  <h1>HL7, from zero to the demo message</h1>
+  <p class="lede">This page is the beginner's reference for everything before FHIR: what HL7 the organization publishes, how the pipe-delimited v2 format works, and what each line of the demo's <code>adt-a01.hl7</code> file means. Read it top to bottom once, then use it as a lookup.</p>
+
+  <section>
+    <h2>1. Overview: HL7 the organization and the standards family</h2>
+    <p>HL7 (Health Level Seven) is a standards organization for health-care data exchange; the "seven" refers to the seventh layer of the OSI networking model, the application layer. It publishes a family of standards that solve the same problem - moving clinical and administrative data between systems - with different technology for different eras. This demo touches two of them: HL7v2 (the pipe-delimited messages you will parse below) and FHIR (the REST + JSON resources on the other side).</p>
+    <div class="grid">
+      <div class="card">
+        <h3>HL7v2</h3>
+        <p>The workhorse since the late 1980s: flat, pipe-delimited messages such as <code>ADT^A01</code> sent over TCP (often with MLLP framing) through interface engines. Positional fields (<code>PID-5</code> = patient name), cheap to produce and parse, still carrying most admit/discharge, lab, and radiology feeds in hospitals today. This page covers it in full.</p>
+      </div>
+      <div class="card">
+        <h3>HL7v3</h3>
+        <p>The 2000s successor attempt: XML messages built on a single object model (the Reference Information Model). Precise but heavy - every message carried the full weight of the model, tooling was complex, and adoption stayed limited compared to v2.</p>
+      </div>
+      <div class="card">
+        <h3>CDA (Clinical Document Architecture)</h3>
+        <p>A v3-derived standard for clinical <em>documents</em> (discharge summaries, lab reports) rather than event messages: an XML document with a human-readable narrative plus optional machine-readable entries. Widely used for document exchange where v2 messages were too granular.</p>
+      </div>
+      <div class="card">
+        <h3>FHIR</h3>
+        <p>The current standard: REST + JSON resources (<code>Patient</code>, <code>Observation</code>, <code>Encounter</code>) with coded meaning and explicit links between records (<code>Observation.subject</code> points at <code>Patient/patient-1</code>). Field names carry the meaning instead of field positions. See <a href="fhir.html">Theory: FHIR</a> and the comparison in <a href="../concepts.html">FHIR vs HL7v2</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. What is HL7v2?</h2>
+    <p>HL7 version 2 is a messaging standard for real-time, event-driven exchange between hospital systems: when something happens (a patient is admitted, a lab result is ready), the source system fires a text message at whoever subscribed to that event. The format dates to the late 1980s, when bandwidth was scarce and parsers were simple: each message is a handful of plain-text lines with fields separated by pipes (<code>|</code>) and sub-parts separated by carets (<code>^</code>). No JSON, no schemas on the wire - both sides just agree on positions: the fifth field of the <code>PID</code> segment is always the patient name. That made v2 trivial to implement on the hardware of the day and easy to route through interface engines, which is why it won.</p>
+    <p>It still runs today wherever the original plumbing was laid and never needed replacing: ADT (admit/discharge/transfer) feeds that keep the census and billing systems in sync, lab (ORM/ORU) orders and results, radiology orders, pharmacy, and device interfaces. New development tends to choose FHIR, but any working hospital still speaks v2 on the inside - which is why this demo starts there.</p>
+  </section>
+
+  <section>
+    <h2>3. Message anatomy</h2>
+    <h3>Segments, fields, components, sub-components, repetitions</h3>
+    <p>A v2 message is a sequence of <strong>segments</strong>, one per line, each starting with a three-letter code (<code>MSH</code>, <code>EVN</code>, <code>PID</code>, <code>PV1</code>). Segments are split into <strong>fields</strong> by <code>|</code> and addressed by position: <code>PID-5</code> means "PID segment, fifth field". A field can be split into <strong>components</strong> by <code>^</code> (<code>Smith^John</code> = family + given name), components into <strong>sub-components</strong> by <code>&amp;</code>, and a whole field can <strong>repeat</strong>, with repeats separated by <code>~</code> (for example two phone numbers in one field). Empty fields are simply left blank between pipes (<code>||</code>), which is why raw v2 is full of consecutive pipes.</p>
+    <h3>Delimiters</h3>
+    <div class="tablewrap"><table>
+      <tr><th>Character</th><th>Name</th><th>Job</th><th>Example</th></tr>
+      <tr><td><code>|</code></td><td>Field separator</td><td>Splits a segment into fields</td><td><code>PID|1||PATIENT-1…</code></td></tr>
+      <tr><td><code>^</code></td><td>Component separator</td><td>Splits a field into components</td><td><code>Smith^John^A</code> (family, given, middle)</td></tr>
+      <tr><td><code>~</code></td><td>Repetition separator</td><td>Repeats a whole field</td><td><code>(217)555-0100~(217)555-0101</code></td></tr>
+      <tr><td><code>&amp;</code></td><td>Sub-component separator</td><td>Splits a component further</td><td>Rare in ADT; used inside coded identifiers</td></tr>
+      <tr><td><code>\</code></td><td>Escape character</td><td>Escapes a delimiter used as literal text</td><td><code>\F\</code> means a literal pipe inside a field</td></tr>
+      <tr><td><code>^~\&amp;</code></td><td>Encoding characters (<code>MSH-2</code>)</td><td>Declares the four characters above, in order</td><td>Every message opens with <code>MSH|^~\&amp;|…</code></td></tr>
+    </table></div>
+    <div class="callout info"><span class="label">Note</span>The sender can theoretically choose different delimiters, but in practice every feed uses <code>| ^ ~ \ &amp;</code>, and the demo file does too. The <code>MSH-2</code> value <code>^~\&amp;</code> is how a parser knows for sure.</div>
+
+    <h3>MSH - the message header, field by field</h3>
+    <p>Every message starts with <code>MSH</code>. It is the one segment whose first separator counts as a field: <code>MSH-1</code> is the pipe character itself, so everything after it is numbered one higher than its position between pipes. Values below are from the demo file.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Field</th><th>Name</th><th>Demo value</th><th>Meaning</th></tr>
+      <tr><td><code>MSH-1</code></td><td>Field separator</td><td><code>|</code></td><td>The separator character itself.</td></tr>
+      <tr><td><code>MSH-2</code></td><td>Encoding characters</td><td><code>^~\&amp;</code></td><td>Component, repetition, escape, sub-component characters.</td></tr>
+      <tr><td><code>MSH-3</code></td><td>Sending application</td><td><code>SENDING_APP</code></td><td>Which software sent this (demo placeholder).</td></tr>
+      <tr><td><code>MSH-4</code></td><td>Sending facility</td><td><code>SENDING_FAC</code></td><td>Which facility sent this (demo placeholder).</td></tr>
+      <tr><td><code>MSH-5</code></td><td>Receiving application</td><td><code>RECEIVING_APP</code></td><td>Intended recipient application.</td></tr>
+      <tr><td><code>MSH-6</code></td><td>Receiving facility</td><td><code>RECEIVING_FAC</code></td><td>Intended recipient facility.</td></tr>
+      <tr><td><code>MSH-7</code></td><td>Date/time of message</td><td><code>20240115120000</code></td><td>15 Jan 2024, 12:00:00 (see DTM below).</td></tr>
+      <tr><td><code>MSH-8</code></td><td>Security</td><td><em>(empty)</em></td><td>Rarely used; empty here.</td></tr>
+      <tr><td><code>MSH-9</code></td><td>Message type</td><td><code>ADT^A01^ADT_A01</code></td><td>Message code ^ trigger event ^ structure (see section 5).</td></tr>
+      <tr><td><code>MSH-10</code></td><td>Message control ID</td><td><code>MSG00001</code></td><td>Unique ID used to match ACKs to messages.</td></tr>
+      <tr><td><code>MSH-11</code></td><td>Processing ID</td><td><code>P</code></td><td><code>P</code> = production (vs <code>T</code> training, <code>D</code> debugging).</td></tr>
+      <tr><td><code>MSH-12</code></td><td>Version ID</td><td><code>2.5.1</code></td><td>The HL7v2 version - matches the demo's HAPI HL7v2 2.5.1 dependency.</td></tr>
+    </table></div>
+
+    <h3>EVN - the event wrapper</h3>
+    <p><code>EVN</code> carries the event metadata: what happened and when it was recorded. In the demo it is minimal - <code>EVN||20240115120000</code>: <code>EVN-1</code> (event type code) is empty and <code>EVN-2</code> (recorded date/time) repeats the message timestamp. Real feeds usually put the trigger code (e.g. <code>A01</code>) in <code>EVN-1</code>, but the authoritative trigger lives in <code>MSH-9</code> anyway.</p>
+
+    <h3>PID - patient identity</h3>
+    <p><code>PID</code> identifies the person. Four fields do most of the work in this demo:</p>
+    <div class="tablewrap"><table>
+      <tr><th>Field</th><th>Name</th><th>Demo value</th><th>Breakdown</th></tr>
+      <tr><td><code>PID-3</code></td><td>Patient identifier list</td><td><code>PATIENT-1^^^HOSPITAL^MR</code></td><td>CX type: id <code>PATIENT-1</code>, assigning authority <code>HOSPITAL</code>, identifier type <code>MR</code> (medical record number). This is the value that becomes the FHIR identifier.</td></tr>
+      <tr><td><code>PID-5</code></td><td>Patient name</td><td><code>Smith^John^A^^^^L</code></td><td>XPN type: family <code>Smith</code>, given <code>John</code>, middle <code>A</code>, name-type <code>L</code> (legal). Becomes FHIR <code>name: [{family: "Smith", given: ["John"]}]</code>.</td></tr>
+      <tr><td><code>PID-7</code></td><td>Date/time of birth</td><td><code>19800515</code></td><td>DTM type, date-only precision: 15 May 1980. Becomes FHIR <code>birthDate: "1980-05-15"</code>.</td></tr>
+      <tr><td><code>PID-8</code></td><td>Administrative sex</td><td><code>M</code></td><td>IS type: <code>M</code> = male. Becomes FHIR <code>gender: "male"</code>.</td></tr>
+    </table></div>
+    <p>The same segment also carries supporting demographics you can spot by position: <code>PID-1</code> set ID (<code>1</code>), <code>PID-11</code> address (<code>123 Main St^^Springfield^IL^62701^USA</code>), <code>PID-13</code> phone (<code>(217)555-0100</code>), <code>PID-16</code> marital status (<code>S</code> = single), and <code>PID-18</code> account number (<code>PATIENT-1</code>).</p>
+
+    <h3>PV1 - the visit</h3>
+    <p><code>PV1</code> describes the encounter (the visit), not the person - this is the segment-level version of the split FHIR makes between <code>Patient</code> and <code>Encounter</code>. In the demo: <code>PV1-1</code> set ID (<code>1</code>), <code>PV1-2</code> patient class (<code>O</code> = outpatient - belongs on <code>Encounter.class</code>, not on Patient), <code>PV1-3</code> assigned location (<code>OPD^^^HOSPITAL</code>: point of care <code>OPD</code>, facility <code>HOSPITAL</code>), <code>PV1-7</code> attending doctor (<code>12345^House^Gregory</code>: id, family, given), <code>PV1-19</code> visit number (<code>V12345</code>), and <code>PV1-44</code> admit date/time (<code>20240115120000</code>). Everything between is empty - one message carrying one visit, with the linking left implicit.</p>
+  </section>
+
+  <section>
+    <h2>4. Data types</h2>
+    <p>Fields are typed, but the type lives in the specification, not in the message - the parser knows <code>PID-5</code> is a name only because the standard says so. The four types that matter for this demo:</p>
+    <div class="tablewrap"><table>
+      <tr><th>Type</th><th>Name</th><th>Shape</th><th>Demo example</th></tr>
+      <tr><td><code>XPN</code></td><td>Extended person name</td><td>family^given^middle^suffix^prefix^^^^name-type</td><td><code>Smith^John^A^^^^L</code> - family Smith, given John, middle A, legal name (<code>L</code>).</td></tr>
+      <tr><td><code>CX</code></td><td>Extended composite ID with check digit</td><td>id^check-digit^check-scheme^assigning-authority^identifier-type</td><td><code>PATIENT-1^^^HOSPITAL^MR</code> - id PATIENT-1 issued by HOSPITAL as a medical record number.</td></tr>
+      <tr><td><code>DTM</code></td><td>Date/time</td><td><code>YYYYMMDD[HHMMSS]</code>, most precise first, truncated to known precision</td><td><code>19800515</code> (birth day, date precision) and <code>20240115120000</code> (message time, second precision).</td></tr>
+      <tr><td><code>IS</code> / <code>CE</code></td><td>Coded value / coded element</td><td><code>IS</code>: a bare code from a user-defined table; <code>CE</code>: code plus text and coding-system name</td><td><code>M</code> (IS, sex = male) and <code>O</code> (IS, patient class = outpatient). A lab-style CE would look like <code>718-7^Hemoglobin^LN</code>.</td></tr>
+    </table></div>
+    <div class="callout good"><span class="label">Tip</span>When a conversion looks odd - <code>M</code> becoming <code>"male"</code>, <code>19800515</code> becoming <code>"1980-05-15"</code> - that is the v2-to-FHIR mapping translating positional codes into FHIR's typed, named fields. The full mapping is tabulated in <a href="../concepts.html">FHIR vs HL7v2</a>.</div>
+  </section>
+
+  <section>
+    <h2>5. Trigger events and message types</h2>
+    <p><code>MSH-9</code> answers "what kind of message is this, and what event fired it?" in three components: message code, trigger event, message structure. The demo's <code>ADT^A01^ADT_A01</code> reads as: message family <code>ADT</code> (Admit/Discharge/Transfer - patient administration), trigger <code>A01</code> (admit / visit notification - "this patient arrived"), following the <code>ADT_A01</code> segment layout. The trigger is the meaningful part: it tells the receiver which business event just happened so it knows what to do with the demographics attached.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Trigger</th><th>Name</th><th>When it fires</th></tr>
+      <tr><td><code>ADT^A01</code></td><td>Admit / visit notification</td><td>Patient arrives (this demo's message).</td></tr>
+      <tr><td><code>ADT^A02</code></td><td>Transfer a patient</td><td>Patient moves location (bed, unit, facility); <code>PV1-3</code> carries the new assignment.</td></tr>
+      <tr><td><code>ADT^A03</code></td><td>Discharge / end visit</td><td>Visit ends; the visit opened by the A01 is closed out.</td></tr>
+      <tr><td><code>ADT^A08</code></td><td>Update patient information</td><td>Demographics changed without an admit/transfer/discharge (name correction, new phone number).</td></tr>
+    </table></div>
+    <p>The pattern generalizes: other families pair their own triggers the same way (e.g. <code>ORM</code> orders, <code>ORU</code> results), but ADT is the one this demo exercises.</p>
+  </section>
+
+  <section>
+    <h2>6. ACK and reliability</h2>
+    <p>Every v2 message expects an ACK (acknowledgment) message back, matched by <code>MSH-10</code> control ID, with an <code>MSA</code> segment carrying accept (<code>AA</code>), error (<code>AE</code>), or reject (<code>AR</code>) codes. In <strong>original mode</strong>, a single ACK covers both transport receipt and application processing, so the sender only learns "it worked" after the receiver has fully handled the message. In <strong>enhanced mode</strong>, the two are split: an immediate accept acknowledgment confirms safe receipt (so the sender can move on), and a later application acknowledgment reports the processing outcome - at the cost of the sender having to correlate two responses per message instead of one.</p>
+  </section>
+
+  <section>
+    <h2>7. Strengths and limits of v2</h2>
+    <p>v2's strengths are why it is still running feeds decades later: plain text over a socket is trivial to emit, parse, and route through interface engines, and the event-driven model (fire an A01 when someone arrives) fits hospital workflows exactly. Its limits are the mirror image, and they are why FHIR came later: positional fields are fragile (one stray pipe shifts everything, and meaning lives in positions, not names); linking is implicit (one message bundles one visit, with no equivalent of a reference like <code>Patient/patient-1</code>); and coded meaning is thin (a bare <code>M</code> or <code>O</code> instead of a typed field). FHIR answers each of these with REST + JSON resources, explicitly linked records, and named fields with coded values - the web-API model replacing the always-the-same-layout fax. The side-by-side table in <a href="../concepts.html">FHIR vs HL7v2</a> shows exactly how the demo's message maps across that gap.</p>
+  </section>
+
+  <section>
+    <h2>8. Annotated walkthrough of the demo's adt-a01.hl7</h2>
+    <p>The file is <code>src/main/resources/hl7-samples/adt-a01.hl7</code>: four segments (<code>MSH</code>, <code>EVN</code>, <code>PID</code>, <code>PV1</code>) separated by carriage returns, describing the admission of John Smith (DOB 15 May 1980, male) as outpatient visit <code>V12345</code>. Each segment below ties back to the theory above.</p>
+    <h3>MSH - who sent what, and which event</h3>
+    <pre class="code">MSH|^~\&amp;|SENDING_APP|SENDING_FAC|RECEIVING_APP|RECEIVING_FAC|20240115120000||ADT^A01^ADT_A01|MSG00001|P|2.5.1</pre>
+    <p>Encoding characters declared up front (<code>MSH-2</code>), demo sender/receiver placeholders (<code>MSH-3</code>–<code>MSH-6</code>), timestamp (<code>MSH-7</code>), empty security field (the <code>||</code> at <code>MSH-8</code>), message type <code>ADT^A01^ADT_A01</code> (<code>MSH-9</code>, section 5), control ID <code>MSG00001</code> for ACK matching (<code>MSH-10</code>, section 6), production flag (<code>MSH-11</code>), version <code>2.5.1</code> (<code>MSH-12</code>).</p>
+    <h3>EVN - when it was recorded</h3>
+    <pre class="code">EVN||20240115120000</pre>
+    <p>Empty event-type code (<code>EVN-1</code>; the real trigger already lives in <code>MSH-9</code>) plus the recorded date/time in <code>EVN-2</code>, matching the message timestamp.</p>
+    <h3>PID - who the patient is</h3>
+    <pre class="code">PID|1||PATIENT-1^^^HOSPITAL^MR||Smith^John^A^^^^L||19800515|M|||123 Main St^^Springfield^IL^62701^USA||(217)555-0100|||S||PATIENT-1</pre>
+    <p>Set ID <code>1</code> (<code>PID-1</code>); identifier <code>PATIENT-1</code> issued by <code>HOSPITAL</code> as type <code>MR</code> (<code>PID-3</code>, CX); legal name Smith, John, middle A (<code>PID-5</code>, XPN); birth date 15 May 1980 (<code>PID-7</code>, DTM); sex male (<code>PID-8</code>, IS); street/city/state/ZIP/country address (<code>PID-11</code>); phone (<code>PID-13</code>); marital status single (<code>PID-16</code>); account number (<code>PID-18</code>). The <code>PID-3</code>/<code>PID-5</code>/<code>PID-7</code>/<code>PID-8</code> rows are exactly the mapping table in <a href="../concepts.html">FHIR vs HL7v2</a>.</p>
+    <h3>PV1 - which visit this is</h3>
+    <pre class="code">PV1|1|O|OPD^^^HOSPITAL||||12345^House^Gregory||||||||||||V12345|||||||||||||||||||||||||20240115120000</pre>
+    <p>Set ID <code>1</code> (<code>PV1-1</code>); patient class outpatient (<code>PV1-2</code> - an <code>Encounter</code> property in FHIR, not a <code>Patient</code> one); assigned location <code>OPD</code> at <code>HOSPITAL</code> (<code>PV1-3</code>); attending doctor Gregory House, id 12345 (<code>PV1-7</code>); visit number <code>V12345</code> (<code>PV1-19</code>); admit date/time (<code>PV1-44</code>). The long runs of pipes are the empty fields between them.</p>
+    <div class="callout info"><span class="label">Note</span>Open the raw file in an editor with visible control characters: segments end with a carriage return (<code>\r</code>), the v2 segment terminator - that is why the file can look like one long line where line endings are not rendered.</div>
+  </section>
+
+  <section>
+    <h2>9. Summary and next steps</h2>
+    <p>You now know what HL7 publishes, why v2 looks the way it does, how to read any ADT segment by position, what <code>ADT^A01</code> (and A02/A03/A08) signal, how ACKs close the reliability loop, and what the demo's four segments say. To see the theory run: start the app and call <code>GET /api/hl7v2/parse</code> to watch this exact file parsed into MSH/PID/PV1 fields, then work through the <a href="../practice.html">Practice</a> page to break and fix messages yourself. For the other half of the story - resources, references, and validation - continue to <a href="fhir.html">Theory: FHIR</a>.</p>
+  </section>
+
+  <div class="pager">
+    <a class="btn ghost" href="../practice.html" style="text-decoration:none">← Practice</a>
+    <a class="btn" href="fhir.html" style="text-decoration:none">Theory: FHIR →</a>
+  </div>
+  <footer>
+    <p class="small muted">Spring Boot 3.2.5 + Java 17 learning demo · HAPI FHIR 7.4.0 · HAPI HL7v2 2.5.1 · H2 in-memory.</p>
+  </footer>
+</main>
+</body>
+</html>

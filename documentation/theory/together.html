@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theory: HL7v2 and FHIR Together · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="../index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="../index.html">Overview</a>
+    <a href="../walkthrough.html">Walkthrough</a>
+    <a href="../endpoints.html">Endpoints</a>
+    <a href="../data-flow.html">Data flow</a>
+    <a href="../concepts.html">FHIR vs HL7v2</a>
+    <a href="../practice.html">Practice</a>
+    <a href="hl7.html">Theory: HL7</a>
+    <a href="fhir.html">Theory: FHIR</a>
+    <a href="together.html" aria-current="page">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Theory · how v2 and FHIR coexist</p>
+  <h1>HL7v2 and FHIR, together</h1>
+  <p class="lede">Hospitals do not get to pick one messaging standard and start over. Decades of HL7v2 feeds run the wards, labs, and billing systems today, while new apps and portals speak FHIR. This page explains how the two live side by side - and how this demo's ADT^A01-to-Patient conversion fits into that picture.</p>
+
+  <section>
+    <h2>1. Overview: why hospitals run both</h2>
+    <p>HL7v2 has carried admission, discharge, lab, and order messages between hospital systems since the late 1980s. Every admission desk, lab analyser, and billing interface in a typical hospital already speaks some dialect of v2, and replacing all of it at once is neither affordable nor safe. Meanwhile, patient portals, mobile health apps, and cross-organisation sharing need modern REST APIs with precisely coded data - which is what FHIR R4 provides.</p>
+    <p>The result is coexistence, not replacement. New FHIR APIs are layered on top of, and alongside, existing v2 feeds: an admission still arrives as an ADT message from the hospital information system, and a FHIR facade or interface engine exposes the same facts as Patient and Encounter resources for newer consumers. Expect this dual world to last at least the next decade, so working clinicians' software engineers need to read both formats and convert between them with care.</p>
+    <div class="callout info"><span class="label">Note</span>This demo shows the coexistence pattern in miniature: one ADT^A01 message converts on demand to a FHIR R4 Patient via <code>GET /api/hl7v2/to-fhir</code>, returning <code>{"resourceType":"Patient","family":"Smith","given":["John"],"gender":"male","birthDate":"1980-05-15"}</code>.</div>
+  </section>
+
+  <section>
+    <h2>2. One event, two expressions: patient admission</h2>
+    <p>When John Smith is admitted, the hospital information system fires an <code>ADT^A01</code> (admit/visit notification) message. In HL7v2 the whole event is one flat message of segments; in FHIR the same facts become two linked resources - a <code>Patient</code> (who the person is) and an <code>Encounter</code> (this particular visit).</p>
+    <div class="grid">
+      <div class="card">
+        <h3>HL7v2: ADT^A01 segments</h3>
+        <p>Positional, pipe-delimited. One message carries header, identity, and visit together:</p>
+        <pre class="code">MSH|^~\&amp;|HIS|HOSP|EHR|HOSP|202401151030||ADT^A01|MSG-1|P|2.5
+EVN||202401151030
+PID|1||PATIENT-1^^^HOSP^MR||Smith^John||19800515|M
+PV1|1|O|||||||||||||||VISIT-1</pre>
+        <p class="small muted"><code>MSH</code> routes the message, <code>PID</code> identifies the patient, <code>PV1</code> describes the visit.</p>
+      </div>
+      <div class="card">
+        <h3>FHIR R4: Patient + Encounter</h3>
+        <p>Named JSON fields with explicit links. Identity and visit are separate resources:</p>
+        <pre class="code">{
+  "resourceType": "Patient",
+  "family": "Smith",
+  "given": ["John"],
+  "gender": "male",
+  "birthDate": "1980-05-15"
+}</pre>
+        <pre class="code">{
+  "resourceType": "Encounter",
+  "class": { "code": "AMB" },
+  "subject": { "reference": "Patient/patient-1" }
+}</pre>
+        <p class="small muted">The Encounter points at the Patient with <code>subject.reference</code> instead of bundling everything in one message.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Field-level conversion guide: v2 to FHIR</h2>
+    <p>This table extends the mapping in <a href="../concepts.html">FHIR vs HL7v2</a> with the visit-level rows and the demo's real values. Every row below is observable live: compare <code>GET /api/hl7v2/parse</code> with <code>GET /api/hl7v2/to-fhir</code>.</p>
+    <h3>PID to Patient</h3>
+    <div class="tablewrap"><table>
+      <tr><th>HL7v2 field</th><th>Demo value</th><th>FHIR Patient field</th><th>Conversion rule</th></tr>
+      <tr><td><code>PID-5</code> (patient name, family^given)</td><td><code>Smith^John</code></td><td><code>name: [{family: "Smith", given: ["John"]}]</code></td><td>Split on <code>^</code>: first component is family, second is given.</td></tr>
+      <tr><td><code>PID-7</code> (date of birth)</td><td><code>19800515</code></td><td><code>birthDate: "1980-05-15"</code></td><td>Reformat <code>yyyyMMdd</code> to ISO date <code>yyyy-MM-dd</code>.</td></tr>
+      <tr><td><code>PID-8</code> (administrative sex)</td><td><code>M</code></td><td><code>gender: "male"</code></td><td>Code map: <code>M</code> to <code>male</code>, <code>F</code> to <code>female</code>.</td></tr>
+      <tr><td><code>PID-3</code> (patient identifier)</td><td><code>PATIENT-1</code></td><td><code>identifier: [{system: "http://hospital.example.org/mrn", value: "PATIENT-1"}]</code></td><td>Carry the value over and attach the assigning-authority system URI.</td></tr>
+    </table></div>
+    <h3>PV1 to Encounter</h3>
+    <div class="tablewrap"><table>
+      <tr><th>HL7v2 field</th><th>Demo value</th><th>FHIR Encounter field</th><th>Conversion rule</th></tr>
+      <tr><td><code>PV1-2</code> (patient class)</td><td><code>O</code> (outpatient)</td><td><code>Encounter.class</code></td><td>Map the class code; never copy it onto Patient. See <code>GET /api/encounters</code> for where it lives.</td></tr>
+      <tr><td><code>PV1-19</code> (visit number)</td><td><code>VISIT-1</code></td><td><code>Encounter.identifier</code></td><td>Becomes the Encounter's business identifier, scoped to the visit - not the patient.</td></tr>
+      <tr><td><code>PV1-7</code> (attending doctor)</td><td>Attending physician reference</td><td><code>Encounter.participant</code></td><td>Becomes a participant entry referencing a Practitioner resource.</td></tr>
+    </table></div>
+    <h3>MSH: the envelope, not the content</h3>
+    <p><code>MSH</code> (message header) fields - sending application, facility, timestamp, message control ID - describe the message itself: who sent it, when, and which message it is. They do not convert into Patient or Encounter clinical fields. In a full FHIR messaging exchange they would map onto a <code>Bundle</code> of type <code>message</code> plus a <code>MessageHeader</code> resource carrying the sender, timestamp, and event code; in this demo the MSH fields are parsed and visible via <code>GET /api/hl7v2/parse</code> but only the clinical PID fields are converted by <code>GET /api/hl7v2/to-fhir</code>.</p>
+  </section>
+
+  <section>
+    <h2>4. What gets lost or needs judgment</h2>
+    <div class="callout warn"><span class="label">Warning</span>Conversion between v2 and FHIR is never purely mechanical. The rows below need a human decision or a documented local rule - silent defaults here cause real patient-safety and billing errors.</div>
+    <div class="tablewrap"><table>
+      <tr><th>Problem</th><th>Why it needs judgment</th></tr>
+      <tr><td>Name use codes</td><td>FHIR names carry a <code>use</code> (<code>official</code>, <code>maiden</code>, <code>nickname</code>). PID-5 type codes do not line up one-to-one, so the converter must choose a default (usually <code>official</code>) and document it.</td></tr>
+      <tr><td>Visit class <code>O</code> vs <code>Encounter.class</code></td><td>HL7v2 patient classes (<code>O</code> outpatient, <code>I</code> inpatient, <code>E</code> emergency) overlap FHIR encounter-class codes (<code>AMB</code>, <code>IMP</code>, <code>EMER</code>) but the value sets differ. Each local code needs an explicit mapping row, not a guess.</td></tr>
+      <tr><td>Identifiers without systems</td><td>A bare <code>PATIENT-1</code> with no assigning authority has no safe FHIR <code>system</code> URI. This demo hard-codes <code>http://hospital.example.org/mrn</code>; a real interface must derive the system from the sending facility or reject the message.</td></tr>
+      <tr><td>Narrative text</td><td>Free-text notes and comments in v2 (<code>NTE</code> segments) have no single FHIR home - they may belong in <code>Annotation</code>, <code>narrative</code>, or a <code>DocumentReference</code>. Dropping them silently loses clinical context.</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>5. Interface engines: the plumbing between v2 and FHIR</h2>
+    <p>Hospitals rarely convert messages by hand in each application. Instead, an <strong>interface engine</strong> sits in the middle: it receives messages from senders, routes them to the right receivers, transforms formats, and queues messages so nothing is lost when a receiver is down.</p>
+    <p><strong>Mirth Connect (NextGen Connect).</strong> The widely used open-source interface engine. It solves the routing and transformation problem with message channels: a channel listens on one endpoint (for example MLLP for v2), runs a transformer script that maps PID and PV1 fields to FHIR JSON, and forwards the result to a FHIR endpoint - queuing messages durably if the destination is offline.</p>
+    <p><strong>Rhapsody.</strong> A commercial integration engine used by large health networks. It solves the same routing, transforming, and queuing problem but adds managed FHIR API tooling, prebuilt clinical mappings, and operational monitoring aimed at high-volume, multi-facility traffic where guaranteed delivery and audit trails are contractual requirements.</p>
+    <div class="callout good"><span class="label">Demo connection</span>This demo's <code>Hl7v2Service</code> plays the transformer role of a one-channel interface engine: parse on one side, FHIR JSON on the other - without the queues, routing tables, or monitoring a production engine provides.</div>
+  </section>
+
+  <section>
+    <h2>6. Migration strategies</h2>
+    <p><strong>Greenfield FHIR.</strong> Build new systems and new exchanges natively on FHIR and leave legacy v2 feeds untouched. Works for new departments, apps, or organisations with no legacy estate; fails wherever the old feeds remain the system of record.</p>
+    <p><strong>Facade / proxy over v2.</strong> Keep the v2 feeds and the existing database as the source of truth, and put a FHIR API in front that converts on demand. Cheapest path to FHIR compatibility and the lowest migration risk - but quirks and data gaps in the v2 feed leak straight through the FHIR API.</p>
+    <p><strong>Incremental domain-by-domain.</strong> Migrate one clinical domain at a time - patients and scheduling first, then labs, then medications - running v2 and FHIR in parallel per domain until each cuts over. The most realistic enterprise path, but it requires maintaining two integrations and careful reconciliation during each overlap period.</p>
+    <div class="callout info"><span class="label">Note</span>This demo resembles the <strong>facade</strong> strategy: <code>Hl7v2Service</code> converts the ADT message to FHIR on demand, while the H2 database stays the source of truth. Nothing is migrated; the FHIR view is derived whenever <code>GET /api/hl7v2/to-fhir</code> is called.</div>
+  </section>
+
+  <section>
+    <h2>7. Hands-on: parse, convert, round-trip</h2>
+    <p>Run these three tasks in order against the running demo (default port 8080). Each builds on the previous one: first see the parsed segments, then the FHIR conversion, then feed new demographics back through the generator.</p>
+    <ol>
+      <li><strong>Parse.</strong> Inspect the raw ADT^A01 segments field by field:
+        <pre class="code">curl http://localhost:8080/api/hl7v2/parse</pre>
+      </li>
+      <li><strong>Convert to FHIR.</strong> Confirm the PID mapping - <code>Smith</code>, <code>John</code>, <code>male</code>, <code>1980-05-15</code>:
+        <pre class="code">curl http://localhost:8080/api/hl7v2/to-fhir</pre>
+      </li>
+      <li><strong>Generate round-trip.</strong> Build a fresh ADT message from demographics, then re-parse it to verify the fields survived:
+        <pre class="code">curl -X POST "http://localhost:8080/api/hl7v2/generate?family=Test&amp;given=User&amp;dob=20000101&amp;gender=M&amp;id=999"</pre>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>8. Summary</h2>
+    <p>Hospitals will run HL7v2 and FHIR together for years: v2 carries the operational feeds, FHIR serves the APIs. One admission is either a flat ADT^A01 message or a linked Patient plus Encounter; the PID and PV1 rows above show exactly how each field crosses over, with MSH becoming message-envelope metadata. Conversion always involves judgment - name use, class codes, identifier systems, and narrative text need explicit rules. Interface engines do the routing, transforming, and queuing at scale, migration usually proceeds behind a facade or domain by domain, and this demo is a small facade you can drive with three curl commands.</p>
+  </section>
+
+  <div class="pager">
+    <a class="btn ghost" href="fhir.html" style="text-decoration:none">← Theory: FHIR</a>
+    <a class="btn" href="../practice.html" style="text-decoration:none">Practice →</a>
+  </div>
+  <footer>
+    <p class="small muted">Spring Boot HL7 FHIR Learning Demo · Theory: HL7v2 and FHIR together. Companion to <a href="../concepts.html">FHIR vs HL7v2</a>.</p>
+  </footer>
+</main>
+</body>
+</html>

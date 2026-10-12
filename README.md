@@ -48,7 +48,7 @@ upstream failure), or 500 (unexpected).
 ## FHIR vs HL7v2 (short version)
 
 - **HL7v2** (`ADT^A01` here): pipe-delimited (`|` field, `^` component, `~` repetition) flat
-  message with segments — `MSH` (header/sending app), `PID` (patient name/DOB/identifier),
+  message with segments - `MSH` (header/sending app), `PID` (patient name/DOB/identifier),
   `PV1` (visit). Positional: `PID-5` = patient name. Great for feeds, weak on semantics.
 - **FHIR R4** (`Patient`, `Observation`, `Encounter`, `Practitioner` here): REST + JSON
   resources with coded semantics (e.g. Observation `code` = LOINC, `subject.reference` =

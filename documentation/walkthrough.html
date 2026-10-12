@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="index.html">Overview</a>
+    <a href="walkthrough.html" aria-current="page">Walkthrough</a>
+    <a href="endpoints.html">Endpoints</a>
+    <a href="data-flow.html">Data flow</a>
+    <a href="concepts.html">FHIR vs HL7v2</a>
+    <a href="practice.html">Practice</a>
+    <a href="theory/hl7.html">Theory: HL7</a>
+    <a href="theory/fhir.html">Theory: FHIR</a>
+    <a href="theory/together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Page 1 · the walkthrough</p>
+  <h1>Ten steps, one running app</h1>
+  <p class="muted small">Use <kbd>←</kbd> <kbd>→</kbd> or the dots to move. Steps you visit are marked visited.</p>
+  <div class="step-detail" aria-live="polite">
+    <div class="dots" id="dots" role="tablist" aria-label="Steps"></div>
+    <div class="step-meta">
+      <span class="badge built" id="stepKind">step</span>
+      <strong id="stepTitle" style="color:var(--ink-strong)"></strong>
+    </div>
+    <div id="stepBody"></div>
+    <div class="controls">
+      <button class="btn ghost" id="prevBtn">← Previous</button>
+      <span class="muted small" id="stepCount"></span>
+      <button class="btn" id="nextBtn">Next →</button>
+    </div>
+  </div>
+  <div class="pager">
+    <a class="btn ghost" href="index.html" style="text-decoration:none">← Overview</a>
+    <a class="btn" href="endpoints.html" style="text-decoration:none">Endpoint explorer →</a>
+  </div>
+  <footer>
+    <p>All outputs are real responses captured from the running app on 2026-10-12.</p>
+  </footer>
+</main>
+<script>
+(function(){
+  "use strict";
+  var BASE = "http://localhost:8080";
+  var steps = [
+    {kind:"setup", title:"1 · Check your tools",
+     cmd:"java -version\nmvn -version",
+     out:"openjdk 17.0.20\nApache Maven 3.9.6",
+     take:"You need Java 17 and Maven. No Gradle, no database to install, no frontend toolchain."},
+    {kind:"run", title:"2 · Start the app",
+     cmd:"mvn spring-boot:run",
+     out:"Started FhirDemoApplication in ~11s\nFhirLoader: loaded 2 patients, 2 observations, 1 encounters, 1 practitioners",
+     take:"That log line is your green light: every sample parsed and saved into the in-memory H2 database."},
+    {kind:"ui", title:"3 · Open the dashboard",
+     cmd:"curl -s -o /dev/null -w \"%{http_code}\\n\" " + BASE + "/",
+     out:"200  (page shows live counts, a patient table, and links to every API)",
+     take:"The dashboard at / renders server-side counts straight from H2. If it loads, the backend works."},
+    {kind:"fhir", title:"4 · Search patients",
+     cmd:"curl -s \"" + BASE + "/api/patients?name=Doe\"",
+     out:"[{\"fhirId\":\"patient-2\",\"family\":\"Doe\",\"given\":\"Jane\", ...}]  →  1 row",
+     take:"Search hits the H2 copy, not the internet. Omit ?name= to list everyone."},
+    {kind:"fhir", title:"5 · Read raw FHIR JSON",
+     cmd:"curl -s " + BASE + "/api/patients/patient-1",
+     out:"{\n  \"resourceType\": \"Patient\",\n  \"id\": \"patient-1\",\n  \"name\": [{ \"family\": \"Smith\", \"given\": [\"John\", \"A\"] }],\n  \"gender\": \"male\",\n  \"birthDate\": \"1980-05-15\"\n}",
+     take:"This is a real FHIR R4 Patient: resourceType, coded gender, ISO birthDate. Compare it with the file in fhir-samples/."},
+    {kind:"fhir", title:"6 · Follow a reference",
+     cmd:"curl -s \"" + BASE + "/api/observations?patient=patient-1\"",
+     out:"[{\"fhirId\":\"observation-1\",\"loincCode\":\"718-7\",\n  \"display\":\"Hemoglobin [Mass/volume] in Blood\",\n  \"value\":14.2,\"unit\":\"g/dL\"}]",
+     take:"Observation.subject.reference = Patient/patient-1 links the lab to its patient. LOINC 718-7 names the test."},
+    {kind:"fhir", title:"7 · Validate FHIR",
+     cmd:"curl -s \"" + BASE + "/api/demo/validate?resource=%7B%22resourceType%22%3A%22Patient%22%7D\"",
+     out:"{\"valid\":false,\"issues\":[\"WARNING [Patient]: dom-6 narrative...Best Practice\"]}",
+     take:"The HAPI validator checks profiles offline. Even a tiny Patient gets a best-practice note about narrative text."},
+    {kind:"fhir", title:"8 · Fetch live data (optional)",
+     cmd:"curl -s " + BASE + "/api/demo/live-patient/example",
+     out:"200 with live Patient JSON  (502 with a clear message when you are offline)",
+     take:"The only call that touches hapi.fhir.org. Read-only: it never writes to your H2. Compare live vs bundled."},
+    {kind:"hl7", title:"9 · Parse an HL7v2 message",
+     cmd:"curl -s " + BASE + "/api/hl7v2/parse",
+     out:"{\"sendingApp\":\"SENDING_APP\",\"familyName\":\"Smith\",\"givenName\":\"John\",\n \"dob\":\"19800515\",\"gender\":\"M\",\"patientClass\":\"O\"}",
+     take:"One pipe-delimited ADT^A01 becomes named fields: MSH = header, PID-5 = name, PID-7 = birth date, PV1-2 = visit class."},
+    {kind:"hl7", title:"10 · Convert ADT to FHIR",
+     cmd:"curl -s " + BASE + "/api/hl7v2/to-fhir",
+     out:"{\n  \"resourceType\": \"Patient\",\n  \"name\": [{ \"family\": \"Smith\", \"given\": [\"John\"] }],\n  \"gender\": \"male\",\n  \"birthDate\": \"1980-05-15\"\n}",
+     take:"The bridge between worlds: PID-5/7/8/3 become name/birthDate/gender/identifier. Then generate one back with POST /api/hl7v2/generate."}
+  ];
+  var idx = 0, seen = {};
+  var dots = document.getElementById("dots"),
+      kind = document.getElementById("stepKind"),
+      title = document.getElementById("stepTitle"),
+      body = document.getElementById("stepBody"),
+      count = document.getElementById("stepCount"),
+      prev = document.getElementById("prevBtn"),
+      next = document.getElementById("nextBtn");
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  steps.forEach(function(_, i){
+    var d = document.createElement("button");
+    d.className = "dot"; d.setAttribute("role","tab");
+    d.setAttribute("aria-label","Step " + (i+1));
+    d.addEventListener("click", function(){ show(i); });
+    dots.appendChild(d);
+  });
+  function show(i){
+    idx = (i + steps.length) % steps.length;
+    seen[idx] = true;
+    var s = steps[idx];
+    kind.textContent = s.kind;
+    title.textContent = s.title;
+    body.innerHTML =
+      "<p class=\"muted small\" style=\"margin-top:0\">Run this in your terminal:</p>" +
+      "<div class=\"terminal\"><span class=\"prompt\">$ </span>" + esc(s.cmd).replace(/\n/g,"<br><span class=\"prompt\">$ </span>") + "</div>" +
+      "<p class=\"muted small\">Expect this:</p>" +
+      "<div class=\"terminal\"><span class=\"dim\">" + esc(s.out).replace(/\n/g,"<br>") + "</span></div>" +
+      "<div class=\"callout good\"><span class=\"label\">Takeaway</span>" + esc(s.take) + "</div>";
+    count.textContent = "Step " + (idx+1) + " of " + steps.length;
+    prev.disabled = (idx === 0);
+    next.textContent = (idx === steps.length-1) ? "Back to start ↺" : "Next →";
+    Array.prototype.forEach.call(dots.children, function(d, j){
+      d.classList.toggle("active", j === idx);
+      d.classList.toggle("done", !!seen[j] && j !== idx);
+      d.setAttribute("aria-selected", j === idx ? "true" : "false");
+    });
+  }
+  prev.addEventListener("click", function(){ show(idx <= 0 ? steps.length-1 : idx-1); });
+  next.addEventListener("click", function(){ show(idx >= steps.length-1 ? 0 : idx+1); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "ArrowRight") show(idx+1);
+    if (e.key === "ArrowLeft") show(idx-1);
+  });
+  show(0);
+})();
+</script>
+</body>
+</html>

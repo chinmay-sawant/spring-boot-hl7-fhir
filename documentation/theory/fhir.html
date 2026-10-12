@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theory: FHIR · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="../index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="../index.html">Overview</a>
+    <a href="../walkthrough.html">Walkthrough</a>
+    <a href="../endpoints.html">Endpoints</a>
+    <a href="../data-flow.html">Data flow</a>
+    <a href="../concepts.html">FHIR vs HL7v2</a>
+    <a href="../practice.html">Practice</a>
+    <a href="hl7.html">Theory: HL7</a>
+    <a href="fhir.html" aria-current="page">Theory: FHIR</a>
+    <a href="together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Theory · FHIR from zero to finish</p>
+  <h1>FHIR: a beginner's reference</h1>
+  <p class="lede">FHIR (Fast Healthcare Interoperability Resources) is how modern health systems exchange clinical data over ordinary web APIs: small JSON documents called <strong>resources</strong>, linked by references, coded with standard vocabularies. This page explains the whole idea using only this demo's data and endpoints, so everything here is verifiable on your own machine.</p>
+
+  <section>
+    <h2>1. Overview: what FHIR is and why it exists</h2>
+    <p>Before FHIR, hospitals mostly exchanged HL7 version 2 pipe-delimited messages and CDA clinical documents. Both work, but v2 fields are positional (<code>PID-5</code> is a name only because everyone agreed it is), and CDA documents are large XML files that are hard to query field by field. Every new integration meant custom parsing and bilateral agreements about what each position meant.</p>
+    <p>FHIR keeps the hard-won clinical semantics and rebuilds the plumbing on web standards: <strong>REST</strong> for transport (read a record with <code>GET</code>, search with query strings), <strong>JSON</strong> for shape (named fields instead of positions), and <strong>standard vocabularies</strong> for meaning (a lab test is a LOINC code, not a local string). The result reads like any other web API: <code>GET /api/patients/patient-1</code> returns a Patient, <code>GET /api/observations?patient=patient-1</code> returns that patient's labs.</p>
+    <div class="callout info"><span class="label">The 80/20 rule</span>FHIR was designed around the 80/20 rule: standardize the 20% of fields that cover 80% of use cases (patient name, birth date, lab code, value), and leave the rest to optional fields and extensions. That is why a Patient can be just a name plus a birth date, while still having room for telecom, address, and identifiers when you need them.</div>
+  </section>
+
+  <section>
+    <h2>2. What is a resource?</h2>
+    <p>A <strong>resource</strong> is one small, self-describing JSON document about one thing: one patient, one lab result, one visit, one clinician. Every resource has the same skeleton:</p>
+    <div class="tablewrap"><table>
+      <tr><th>Field</th><th>Meaning</th><th>Example from this demo</th></tr>
+      <tr><td><code>resourceType</code></td><td>Which kind of resource this is. Always present.</td><td><code>"resourceType": "Patient"</code></td></tr>
+      <tr><td><code>id</code></td><td>Logical id, unique within this server. Used in references.</td><td><code>"id": "patient-1"</code></td></tr>
+      <tr><td><code>meta</code></td><td>Versioning and profile tags added by the server. Optional in our sample files.</td><td>Omitted in bundled samples; servers add it on write.</td></tr>
+      <tr><td><code>narrative</code> (<code>text.div</code>)</td><td>Human-readable XHTML summary, a best-practice fallback for display.</td><td>Omitted in bundled samples - this is exactly what the <code>dom-6</code> validator warning flags (see section 6).</td></tr>
+    </table></div>
+    <p>Everything else on a resource is domain fields: <code>Patient.name</code>, <code>Observation.valueQuantity</code>, <code>Encounter.period</code>. Unknown fields are not silently accepted - the resource type defines what is legal, and validation enforces it.</p>
+    <div class="callout info"><span class="label">R4 vs other releases</span>FHIR grew through DSTU2 (early draft), STU3 (trial use), and then <strong>R4</strong> (Release 4, 2019), the first normative release whose core resources are stable and backward-compatible going forward. R4B (2022) added only balloted extras, and R5 (2023) is the newest normative edition. <strong>R4 is the widely-adopted core used here</strong> - this demo runs HAPI FHIR 7.4.0 in R4 mode, and every sample file is an R4 resource.</div>
+  </section>
+
+  <section>
+    <h2>3. Tour of the four resources in this demo</h2>
+    <p>Each card below names the required vs optional fields that matter here, with snippets copied verbatim from the bundled sample files in <code>src/main/resources/fhir-samples/</code>.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Patient: who the person is</h3>
+        <p>Required in practice: <code>resourceType</code> plus enough identity to be useful (usually a <code>name</code> or <code>identifier</code>). <code>gender</code>, <code>birthDate</code>, <code>telecom</code>, <code>address</code>, and <code>active</code> are all optional in the base spec but carry the demographics every downstream system needs.</p>
+        <pre class="code">{
+  "resourceType": "Patient",
+  "id": "patient-1",
+  "identifier": [
+    {
+      "system": "http://hospital.example.org/mrn",
+      "value": "PATIENT-1"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Smith",
+      "given": ["John", "A"]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(217) 555-0100",
+      "use": "home"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1980-05-15",
+  "address": [
+    {
+      "use": "home",
+      "line": ["123 Main St"],
+      "city": "Springfield",
+      "state": "IL",
+      "postalCode": "62701",
+      "country": "USA"
+    }
+  ]
+}</pre>
+        <p class="small muted">File: <code>patient-1.json</code> - Smith/John, male, 1980-05-15. Confirm live with <code>GET /api/patients/patient-1</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Observation: what was measured</h3>
+        <p>Required: <code>status</code> (e.g. <code>final</code>) and <code>code</code> (what was measured). <code>subject</code>, <code>effectiveDateTime</code>, <code>valueQuantity</code>, and <code>category</code> are optional in the abstract but effectively mandatory for a lab to be interpretable.</p>
+        <pre class="code">{
+  "resourceType": "Observation",
+  "id": "observation-1",
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "laboratory",
+          "display": "Laboratory"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "718-7",
+        "display": "Hemoglobin [Mass/volume] in Blood"
+      }
+    ],
+    "text": "Hemoglobin"
+  },
+  "subject": {
+    "reference": "Patient/patient-1",
+    "display": "John A Smith"
+  },
+  "effectiveDateTime": "2024-01-15",
+  "valueQuantity": {
+    "value": 14.2,
+    "unit": "g/dL",
+    "system": "http://unitsofmeasure.org",
+    "code": "g/dL"
+  }
+}</pre>
+        <p class="small muted">File: <code>observation-1.json</code> - LOINC 718-7 Hemoglobin, 14.2 g/dL. Confirm with <code>GET /api/observations?patient=patient-1</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Encounter: what visit happened</h3>
+        <p>Required: <code>status</code> (e.g. <code>finished</code>) and a visit <code>class</code> (inpatient, outpatient, ambulatory). <code>subject</code>, <code>participant</code>, <code>period</code>, <code>serviceType</code>, and <code>reasonCode</code> describe who, when, and why.</p>
+        <pre class="code">{
+  "resourceType": "Encounter",
+  "id": "encounter-1",
+  "status": "finished",
+  "class": {
+    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+    "code": "AMB",
+    "display": "ambulatory"
+  },
+  "serviceType": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "394575009",
+        "display": "Outpatient"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-1",
+    "display": "John A Smith"
+  },
+  "participant": [
+    {
+      "individual": {
+        "reference": "Practitioner/practitioner-1",
+        "display": "Dr. Gregory House"
+      }
+    }
+  ],
+  "period": {
+    "start": "2024-01-15T09:00:00-06:00",
+    "end": "2024-01-15T10:30:00-06:00"
+  },
+  "reasonCode": [
+    {
+      "text": "Annual physical exam"
+    }
+  ]
+}</pre>
+        <p class="small muted">File: <code>encounter-1.json</code> - ambulatory annual physical on 2024-01-15 linking the patient and the practitioner.</p>
+      </div>
+      <div class="card">
+        <h3>Practitioner: who provided care</h3>
+        <p>Required: <code>resourceType</code> only - almost everything is optional. In practice a <code>name</code> plus an <code>identifier</code> (e.g. NPI) is the minimum that lets scheduling and attribution work.</p>
+        <pre class="code">{
+  "resourceType": "Practitioner",
+  "id": "practitioner-1",
+  "identifier": [
+    {
+      "system": "http://hospital.example.org/npi",
+      "value": "12345"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "House",
+      "given": ["Gregory"]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(217) 555-0199",
+      "use": "work"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1959-06-11"
+}</pre>
+        <p class="small muted">File: <code>practitioner-1.json</code> - Dr. Gregory House, referenced by <code>encounter-1.json</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. References and linking</h2>
+    <p>Resources point at each other with <strong>references</strong> of the form <code>ResourceType/id</code>. The lab does not embed the patient; it points at the patient:</p>
+    <pre class="code">"subject": {
+  "reference": "Patient/patient-1",
+  "display": "John A Smith"
+}</pre>
+    <p>In this demo, <code>Observation.subject.reference</code> is <code>Patient/patient-1</code>, <code>Encounter.subject.reference</code> is <code>Patient/patient-1</code>, and <code>Encounter.participant[0].individual.reference</code> is <code>Practitioner/practitioner-1</code>. The <code>display</code> string is a convenience label only - the <code>reference</code> is what the server follows.</p>
+    <div class="callout good"><span class="label">Vs HL7v2 implicit bundling</span>An HL7v2 ADT message bundles one visit implicitly: PID (patient) and PV1 (visit) sit in the same message, so linkage is by position, not by pointer. FHIR inverts this: each resource stands alone and links <strong>explicitly</strong>. That is why one Observation can be fetched, validated, and updated without re-sending the whole chart - and why <code>GET /api/observations?patient=patient-1</code> is a search over links, not a scan of bundled messages.</div>
+  </section>
+
+  <section>
+    <h2>5. REST API: read, search, create, update</h2>
+    <p>FHIR servers expose each resource type as a URL path. This demo mirrors the standard shape under <code>/api</code>:</p>
+    <div class="tablewrap"><table>
+      <tr><th>Operation</th><th>FHIR shape</th><th>In this demo</th></tr>
+      <tr><td>Read one</td><td><code>GET /Patient/{id}</code></td><td><code>GET /api/patients/patient-1</code> - full Patient JSON</td></tr>
+      <tr><td>Search</td><td><code>GET /Patient?name=Smith</code></td><td><code>GET /api/patients?name=Smith</code> - match on family/given</td></tr>
+      <tr><td>Search by link</td><td><code>GET /Observation?patient=Patient/patient-1</code></td><td><code>GET /api/observations?patient=patient-1</code> - labs for one patient</td></tr>
+      <tr><td>Create</td><td><code>POST /Patient</code> with a resource body</td><td>Same pattern; the server assigns or honors the <code>id</code></td></tr>
+      <tr><td>Update</td><td><code>PUT /Patient/{id}</code> with the full replacement body</td><td>Same pattern; full resource, not a patch</td></tr>
+    </table></div>
+    <p><strong>Search parameters</strong> are per-resource query keys defined by the spec (<code>name</code>, <code>birthdate</code>, <code>gender</code> on Patient; <code>patient</code>, <code>code</code>, <code>status</code> on Observation). Servers may support more or fewer; this demo supports the subset its endpoints document. A multi-result search on a full FHIR server returns a <strong>Bundle</strong> of type <code>searchset</code> - one JSON document wrapping all matches plus paging links - whereas this demo returns the match list directly to keep the learning curve flat.</p>
+  </section>
+
+  <section>
+    <h2>6. Profiles, extensions, validation</h2>
+    <p>A <strong>profile</strong> tightens the base resource for a use case: it says which optional fields become required, which value sets are allowed, and what <strong>cardinality</strong> each field has. Cardinality <code>1..1</code> means exactly one occurrence is required - <code>Observation.status</code> is <code>1..1</code>, which is why deleting it makes validation fail. <strong>Must-support</strong> is softer: it flags fields clients must be able to handle (like <code>Observation.valueQuantity</code>), without making them strictly required.</p>
+    <p>The 80/20 rule needs an escape hatch, and that hatch is <strong>extensions</strong>: namespaced extra fields (<code>url</code> + value) for data the core spec did not standardize. Extensions keep everyone interoperable on the core while letting regions and vendors carry local needs without forking the spec.</p>
+    <div class="callout warn"><span class="label">What the demo validator checks</span>Try <code>GET /api/demo/validate?resource=...</code> (walkthrough step 7): the HAPI validator runs the resource against its R4 profile offline. The classic result is the <code>dom-6</code> warning - <em>a resource should have a narrative (text.div) as a best-practice fallback for human display</em>. Our bundled samples omit the narrative on purpose, so even a valid Patient earns that warning. It is a warning, not an error: machine-readable data is complete; only the human-readable backup is missing.</div>
+  </section>
+
+  <section>
+    <h2>7. Terminology: LOINC, SNOMED CT, UCUM</h2>
+    <p>Codes are what make FHIR data comparable across hospitals. Three systems do most of the work in this demo:</p>
+    <div class="tablewrap"><table>
+      <tr><th>System</th><th>Role</th><th>Demo example</th></tr>
+      <tr><td><code>LOINC</code></td><td>Names lab tests and measurements universally.</td><td><code>Observation.code</code> = <code>718-7</code>, Hemoglobin [Mass/volume] in Blood, with human text <code>"Hemoglobin"</code> alongside.</td></tr>
+      <tr><td><code>SNOMED CT</code></td><td>Names clinical concepts: conditions, procedures, service types.</td><td><code>Encounter.serviceType</code> = <code>394575009</code>, Outpatient (system <code>http://snomed.info/sct</code>).</td></tr>
+      <tr><td><code>UCUM</code></td><td>Units of measure, so <code>14.2</code> is unambiguous.</td><td><code>Observation.valueQuantity</code> = <code>14.2 g/dL</code> (system <code>http://unitsofmeasure.org</code>, code <code>g/dL</code>).</td></tr>
+    </table></div>
+    <p>The pattern is always the same <code>Coding</code> shape - <code>system</code> (which dictionary), <code>code</code> (the entry), <code>display</code> (human label) - plus an optional plain <code>text</code> fallback. Compare the demo's LOINC block with the HL7v2 equivalent: in v2 the test name rides as free text in <code>OBX-3</code>; in FHIR the machine-readable code is primary and the text is the backup.</p>
+  </section>
+
+  <section>
+    <h2>8. Summary and where to go next</h2>
+    <p>FHIR is REST plus JSON plus coded meaning: small typed resources, explicit references instead of bundled segments, standard vocabularies instead of local strings, and profiles plus validation to keep everyone honest. R4 is the stable core this demo teaches.</p>
+    <div class="callout good"><span class="label">Hands-on next</span>Work walkthrough steps 4–8 in order: step 4 searches patients (<code>GET /api/patients?name=</code>), step 5 reads raw Patient JSON (<code>GET /api/patients/{id}</code>), step 6 follows the Observation-to-Patient reference (<code>GET /api/observations?patient=</code>), step 7 triggers the <code>dom-6</code> validation warning (<code>GET /api/demo/validate?resource=</code>), and step 8 compares bundled data with a live record (<code>GET /api/demo/live-patient/{id}</code>). Then open the <a href="../endpoints.html">endpoint explorer</a> and re-run each call yourself with different names, ids, and patient filters.</div>
+  </section>
+
+  <div class="pager">
+    <a class="btn ghost" href="hl7.html" style="text-decoration:none">← Theory: HL7</a>
+    <a class="btn" href="together.html" style="text-decoration:none">Theory: Together →</a>
+  </div>
+  <footer>
+    <p>Samples quoted verbatim from <code>src/main/resources/fhir-samples/</code>. All calls verified against the running app.</p>
+  </footer>
+</main>
+</body>
+</html>

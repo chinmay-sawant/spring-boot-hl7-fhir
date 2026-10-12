@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data flow · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="index.html">Overview</a>
+    <a href="walkthrough.html">Walkthrough</a>
+    <a href="endpoints.html">Endpoints</a>
+    <a href="data-flow.html" aria-current="page">Data flow</a>
+    <a href="concepts.html">FHIR vs HL7v2</a>
+    <a href="practice.html">Practice</a>
+    <a href="theory/hl7.html">Theory: HL7</a>
+    <a href="theory/fhir.html">Theory: FHIR</a>
+    <a href="theory/together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Page 3 · data flow</p>
+  <h1>Where the data lives and moves</h1>
+  <div class="cols">
+    <div>
+      <p>Select a layer to see what it does. The key fact: the app <strong>never writes to the public HAPI server</strong>. H2 holds the bundled samples; the live fetch is read-only comparison.</p>
+      <div class="layer-stack" id="layers"></div>
+    </div>
+    <div>
+      <div class="step-detail" style="min-height:0" id="layerDetail" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="callout info"><span class="label">Boot sequence</span>Spring starts → JPA creates 4 tables (<code>patients</code>, <code>observations</code>, <code>encounters</code>, <code>practitioners</code>) → <code>FhirLoaderService</code> parses <code>fhir-samples/*.json</code> with the HAPI R4 parser → rows saved once (idempotent on <code>fhirId</code>) → log line <code>loaded 2 patients, 2 observations, 1 encounters, 1 practitioners</code>.</div>
+  <div class="callout good"><span class="label">Request path</span><code>curl</code> → controller (params, error envelope) → service (HAPI parse/query logic) → repository (H2) → canonical FHIR JSON back. HL7v2 requests additionally pass through the HAPI v2 <code>PipeParser</code>.</div>
+  <div class="pager">
+    <a class="btn ghost" href="endpoints.html" style="text-decoration:none">← Endpoints</a>
+    <a class="btn" href="concepts.html" style="text-decoration:none">FHIR vs HL7v2 →</a>
+  </div>
+</main>
+<script>
+(function(){
+  "use strict";
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  var layers = [
+    {name:"Browser / curl", tech:"dashboard, Swagger UI, terminal",
+     text:"You start here. The dashboard (GET /) shows live H2 counts. Swagger UI documents every endpoint. curl returns JSON you can pipe and inspect."},
+    {name:"Controllers", tech:"PatientController, ObservationController, EncounterController, PractitionerController, FhirDemoController, Hl7v2Controller, DashboardController",
+     text:"Thin HTTP layer: read query params, call one service, return JSON or a 4xx/5xx error envelope. No business logic lives here."},
+    {name:"Services", tech:"FhirLoaderService, FhirQueryService, HapiFhirFetchService, FhirValidationService, Hl7v2Service",
+     text:"The learning core. The loader parses bundled JSON with the HAPI R4 parser on boot. The query service re-encodes stored JSON to canonical FHIR. The HL7v2 service parses ADT^A01 and converts PID fields to a FHIR Patient."},
+    {name:"Repositories + H2", tech:"patients, observations, encounters, practitioners",
+     text:"Source of truth at runtime. Browse it at /h2-console (JDBC jdbc:h2:mem:fhirDb, user sa, empty password). Data vanishes on restart - the loader rebuilds it. Note: the observation value column is obs_value because value is reserved in H2."},
+    {name:"Public HAPI server (read-only)", tech:"https://hapi.fhir.org/baseR4",
+     text:"Touched by exactly one endpoint: GET /api/demo/live-patient/{id}. It never writes. Offline? You get a clean 502 and everything else keeps working."}
+  ];
+  var layerBox = document.getElementById("layers"),
+      layerDetail = document.getElementById("layerDetail");
+  layers.forEach(function(l, i){
+    var d = document.createElement("div");
+    d.className = "layer" + (i === 0 ? " active" : "");
+    d.setAttribute("tabindex","0");
+    d.innerHTML = "<b>" + esc(l.name) + "</b><span class=\"tech\">" + esc(l.tech) + "</span>";
+    d.addEventListener("click", function(){ setLayer(i); });
+    d.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLayer(i); } });
+    layerBox.appendChild(d);
+  });
+  function setLayer(i){
+    Array.prototype.forEach.call(layerBox.children, function(c, j){
+      c.classList.toggle("active", j === i);
+    });
+    layerDetail.innerHTML = "<h3>" + esc(layers[i].name) + "</h3><p>" + esc(layers[i].text) + "</p>";
+  }
+  setLayer(0);
+})();
+</script>
+</body>
+</html>

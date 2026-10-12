@@ -79,7 +79,7 @@ public class FhirQueryService {
 
     /**
      * Observations for a patient. Accepts either a bare FHIR id ({@code "123"})
-     * or a reference string ({@code "Patient/123"}) — both are tried.
+     * or a reference string ({@code "Patient/123"}) - both are tried.
      */
     public List<ObservationEntity> listObservationsForPatient(String patientIdOrRef) {
         String ref = normalizePatientRef(patientIdOrRef);

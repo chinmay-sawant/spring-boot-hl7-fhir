@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="index.html">Overview</a>
+    <a href="walkthrough.html">Walkthrough</a>
+    <a href="endpoints.html">Endpoints</a>
+    <a href="data-flow.html">Data flow</a>
+    <a href="concepts.html">FHIR vs HL7v2</a>
+    <a href="practice.html" aria-current="page">Practice</a>
+    <a href="theory/hl7.html">Theory: HL7</a>
+    <a href="theory/fhir.html">Theory: FHIR</a>
+    <a href="theory/together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Page 5 · practice</p>
+  <h1>Five exercises to lock it in</h1>
+  <div class="card">
+    <ul class="checks" id="checks">
+      <li><input type="checkbox" id="c1"><span><label for="c1">Search <code>GET /api/patients?name=Doe</code> and explain why it returns one row (hint: <code>findByFamilyIgnoreCase</code>).</label></span></li>
+      <li><input type="checkbox" id="c2"><span><label for="c2">Fetch <code>GET /api/observations?patient=patient-1</code> and read the LOINC code, value, and unit. What test was run?</label></span></li>
+      <li><input type="checkbox" id="c3"><span><label for="c3">Validate a broken Observation (remove <code>status</code>) via <code>/api/demo/validate</code> and read the error. Which cardinality rule fired?</label></span></li>
+      <li><input type="checkbox" id="c4"><span><label for="c4">Compare <code>GET /api/hl7v2/to-fhir</code> with <code>GET /api/patients/patient-1</code>. Which fields survive the ADT → FHIR trip, and which are lost?</label></span></li>
+      <li><input type="checkbox" id="c5"><span><label for="c5">Generate an ADT for yourself with <code>POST /api/hl7v2/generate</code>, then parse it back with <code>POST /api/hl7v2/parse</code>. Did name and birth date round-trip?</label></span></li>
+    </ul>
+    <p class="muted small" id="progress">0 of 5 complete.</p>
+  </div>
+  <div class="callout warn"><span class="label">Trouble?</span>Port in use → stop the old run first. Empty responses → check the boot log for the <code>FhirLoader: loaded …</code> line. Live fetch fails with 502 → you are offline; everything else still works from the bundled samples.</div>
+  <div class="pager">
+    <a class="btn ghost" href="concepts.html" style="text-decoration:none">← FHIR vs HL7v2</a>
+    <a class="btn" href="index.html" style="text-decoration:none">Back to overview ↺</a>
+  </div>
+</main>
+<script>
+(function(){
+  "use strict";
+  var boxes = document.querySelectorAll("#checks input");
+  var progress = document.getElementById("progress");
+  function updateProgress(){
+    var n = 0;
+    Array.prototype.forEach.call(boxes, function(b){
+      if (b.checked) { n++; b.closest("li").classList.add("done"); }
+      else { b.closest("li").classList.remove("done"); }
+    });
+    progress.textContent = n + " of " + boxes.length + " complete" + (n === boxes.length ? " - walkthrough finished. Well done." : ".");
+  }
+  Array.prototype.forEach.call(boxes, function(b){ b.addEventListener("change", updateProgress); });
+  updateProgress();
+})();
+</script>
+</body>
+</html>

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 /**
  * Phase 3.2 live read-only fetch from the public HAPI FHIR server.
  *
- * <p>Never writes to H2 — strictly a comparison/demo path so the bundled
+ * <p>Never writes to H2 - strictly a comparison/demo path so the bundled
  * offline samples remain the source of truth. All transport/parse failures
  * are wrapped in {@link HapiFetchException} with an offline-friendly message.
  */

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Endpoint explorer · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="index.html">Overview</a>
+    <a href="walkthrough.html">Walkthrough</a>
+    <a href="endpoints.html" aria-current="page">Endpoints</a>
+    <a href="data-flow.html">Data flow</a>
+    <a href="concepts.html">FHIR vs HL7v2</a>
+    <a href="practice.html">Practice</a>
+    <a href="theory/hl7.html">Theory: HL7</a>
+    <a href="theory/fhir.html">Theory: FHIR</a>
+    <a href="theory/together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Page 2 · endpoint explorer</p>
+  <h1>Every endpoint, with a real response</h1>
+  <p>Pick an endpoint. The panel shows the exact <code>curl</code> to run and the real response from the app. Use the copy button to take the command to your terminal.</p>
+  <div class="chips" id="epChips" role="tablist" aria-label="Endpoints"></div>
+  <div class="cols">
+    <div>
+      <h3>Run this</h3>
+      <div class="terminal" id="epCmd"></div>
+      <p><button class="btn ghost" id="copyCmd">Copy command</button></p>
+    </div>
+    <div>
+      <h3>You get this</h3>
+      <div class="terminal" id="epOut"></div>
+    </div>
+  </div>
+  <div class="callout info"><span class="label">Errors</span>All endpoints return JSON errors: <code>400</code> bad input, <code>404</code> unknown id, <code>502</code> live-fetch upstream failure, <code>500</code> unexpected.</div>
+  <div class="pager">
+    <a class="btn ghost" href="walkthrough.html" style="text-decoration:none">← Walkthrough</a>
+    <a class="btn" href="data-flow.html" style="text-decoration:none">Data flow →</a>
+  </div>
+  <footer>
+    <p>Full OpenAPI listing at <code>GET /v3/api-docs</code>; interactive docs at <code>/swagger-ui.html</code>.</p>
+  </footer>
+</main>
+<script>
+(function(){
+  "use strict";
+  var BASE = "http://localhost:8080";
+  var eps = [
+    {name:"GET /api/patients?name=", cmd:"curl -s \"" + BASE + "/api/patients?name=Doe\"",
+     out:"[{\"fhirId\":\"patient-2\",\"family\":\"Doe\",\"given\":\"Jane\",\n  \"gender\":\"female\",\"birthDate\":\"1990-08-22\", ...}]"},
+    {name:"GET /api/patients/{id}", cmd:"curl -s " + BASE + "/api/patients/patient-1",
+     out:"{\n  \"resourceType\": \"Patient\",\n  \"id\": \"patient-1\",\n  \"gender\": \"male\",\n  \"birthDate\": \"1980-05-15\", ...\n}"},
+    {name:"GET /api/observations?patient=", cmd:"curl -s \"" + BASE + "/api/observations?patient=patient-1\"",
+     out:"[{\"fhirId\":\"observation-1\",\"loincCode\":\"718-7\",\n  \"display\":\"Hemoglobin [Mass/volume] in Blood\",\n  \"value\":14.2,\"unit\":\"g/dL\"}]"},
+    {name:"GET /api/observations/{id}", cmd:"curl -s " + BASE + "/api/observations/observation-1",
+     out:"{\n  \"resourceType\": \"Observation\",\n  \"id\": \"observation-1\",\n  \"status\": \"final\",\n  \"valueQuantity\": { \"value\": 14.2, \"unit\": \"g/dL\" }, ...\n}"},
+    {name:"GET /api/encounters", cmd:"curl -s " + BASE + "/api/encounters",
+     out:"[{\"fhirId\":\"encounter-1\",\"status\":\"finished\",\n  \"classCode\":\"AMB\",\"serviceType\":\"394575009\", ...}]"},
+    {name:"GET /api/encounters/{id}", cmd:"curl -s " + BASE + "/api/encounters/encounter-1",
+     out:"{\n  \"resourceType\": \"Encounter\",\n  \"id\": \"encounter-1\",\n  \"status\": \"finished\", ...\n}"},
+    {name:"GET /api/practitioners", cmd:"curl -s " + BASE + "/api/practitioners",
+     out:"[{\"fhirId\":\"practitioner-1\",\"identifier\":\"12345\",\n  \"active\":true, ...}]"},
+    {name:"GET /api/demo/validate", cmd:"curl -s \"" + BASE + "/api/demo/validate?resource=%7B%22resourceType%22%3A%22Patient%22%7D\"",
+     out:"{\"valid\":false,\"issues\":[\"WARNING [Patient]: dom-6 ...\"]}"},
+    {name:"GET /api/demo/live-patient/{id}", cmd:"curl -s " + BASE + "/api/demo/live-patient/example",
+     out:"200 live Patient JSON  ·  502 {\"error\": ...} when offline"},
+    {name:"GET /api/hl7v2/parse", cmd:"curl -s " + BASE + "/api/hl7v2/parse",
+     out:"{\"sendingApp\":\"SENDING_APP\",\"familyName\":\"Smith\",\n \"givenName\":\"John\",\"dob\":\"19800515\",\"gender\":\"M\",\n \"patientClass\":\"O\"}"},
+    {name:"POST /api/hl7v2/parse", cmd:"curl -s -X POST -H \"Content-Type: text/plain\" --data-binary @src/main/resources/hl7-samples/adt-a01.hl7 " + BASE + "/api/hl7v2/parse",
+     out:"Same field map as GET - parses the message you post."},
+    {name:"GET /api/hl7v2/to-fhir", cmd:"curl -s " + BASE + "/api/hl7v2/to-fhir",
+     out:"{\"resourceType\":\"Patient\",\"gender\":\"male\",\n \"birthDate\":\"1980-05-15\", ...}"},
+    {name:"POST /api/hl7v2/generate", cmd:"curl -s -X POST \"" + BASE + "/api/hl7v2/generate?family=Test&given=User&dob=20000101&gender=M&id=999\"",
+     out:"{\"hl7\":\"MSH|^~\\\\&|FHIRDEMO|...\\rEVN||...\\rPID|1||999^^^DEMO^MR||Test^User||20000101|M\\rPV1|1|I\\r\"}"}
+  ];
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  var chips = document.getElementById("epChips"),
+      epCmd = document.getElementById("epCmd"),
+      epOut = document.getElementById("epOut"),
+      copyBtn = document.getElementById("copyCmd"),
+      activeEp = 0;
+  eps.forEach(function(e, i){
+    var c = document.createElement("button");
+    c.className = "chip" + (i === 0 ? " on" : "");
+    c.textContent = e.name;
+    c.setAttribute("role","tab");
+    c.addEventListener("click", function(){ pick(i); });
+    chips.appendChild(c);
+  });
+  function pick(i){
+    activeEp = i;
+    epCmd.innerHTML = "<span class=\"prompt\">$ </span>" + esc(eps[i].cmd);
+    epOut.innerHTML = "<span class=\"dim\">" + esc(eps[i].out).replace(/\n/g,"<br>") + "</span>";
+    Array.prototype.forEach.call(chips.children, function(c, j){
+      c.classList.toggle("on", j === i);
+    });
+  }
+  copyBtn.addEventListener("click", function(){
+    var done = function(){ copyBtn.textContent = "Copied ✓"; setTimeout(function(){ copyBtn.textContent = "Copy command"; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(eps[activeEp].cmd).then(done, done);
+    } else {
+      var t = document.createElement("textarea");
+      t.value = eps[activeEp].cmd; document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(t); done();
+    }
+  });
+  pick(0);
+})();
+</script>
+</body>
+</html>

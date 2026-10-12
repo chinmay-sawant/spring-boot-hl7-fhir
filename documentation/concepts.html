@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FHIR vs HL7v2 · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="index.html">Overview</a>
+    <a href="walkthrough.html">Walkthrough</a>
+    <a href="endpoints.html">Endpoints</a>
+    <a href="data-flow.html">Data flow</a>
+    <a href="concepts.html" aria-current="page">FHIR vs HL7v2</a>
+    <a href="practice.html">Practice</a>
+    <a href="theory/hl7.html">Theory: HL7</a>
+    <a href="theory/fhir.html">Theory: FHIR</a>
+    <a href="theory/together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Page 4 · concepts</p>
+  <h1>FHIR vs HL7v2 in one table</h1>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>HL7v2 (ADT^A01 here)</th><th>FHIR R4 (Patient, Observation, …)</th></tr>
+    <tr><td><strong>Shape</strong></td><td>Flat pipe-delimited segments: <code>MSH</code> header, <code>PID</code> patient, <code>PV1</code> visit. Fields by position (<code>PID-5</code> = name).</td><td>REST + JSON resources with coded meaning. <code>Observation.code</code> is a LOINC code; <code>subject.reference</code> links <code>Patient/patient-1</code>.</td></tr>
+    <tr><td><strong>Linking</strong></td><td>Implicit: one message carries one visit.</td><td>Explicit references: Observation → Patient, Encounter → Patient + Practitioner.</td></tr>
+    <tr><td><strong>Separators</strong></td><td><code>|</code> field, <code>^</code> component, <code>~</code> repetition, <code>&amp;</code> sub-component. See the raw <code>adt-a01.hl7</code> file.</td><td>JSON structure; no positional parsing. Field names carry the meaning.</td></tr>
+    <tr><td><strong>Analogy</strong></td><td>A fax that always arrives in the same layout.</td><td>A web API with typed, linkable records.</td></tr>
+    <tr><td><strong>In this demo</strong></td><td><code>adt-a01.hl7</code> parses to MSH/PID/PV1 fields.</td><td>Six JSON files load into H2 and serve over REST.</td></tr>
+  </table></div>
+
+  <section>
+    <h2>How ADT^A01 maps to a FHIR Patient</h2>
+    <p>This is exactly what <code>GET /api/hl7v2/to-fhir</code> does. Verify each row yourself by comparing that endpoint with <code>GET /api/patients/patient-1</code>.</p>
+    <div class="tablewrap"><table>
+      <tr><th>HL7v2 field</th><th>Example value</th><th>FHIR Patient field</th></tr>
+      <tr><td><code>PID-5</code> (family^given)</td><td><code>Smith^John</code></td><td><code>name: [{family: "Smith", given: ["John"]}]</code></td></tr>
+      <tr><td><code>PID-7</code> (birth date)</td><td><code>19800515</code></td><td><code>birthDate: "1980-05-15"</code></td></tr>
+      <tr><td><code>PID-8</code> (sex)</td><td><code>M</code></td><td><code>gender: "male"</code></td></tr>
+      <tr><td><code>PID-3</code> (identifier)</td><td><code>PATIENT-1</code></td><td><code>identifier: [{system: ".../mrn", value: "PATIENT-1"}]</code></td></tr>
+      <tr><td><code>PV1-2</code> (patient class)</td><td><code>O</code> (outpatient)</td><td>Belongs on <code>Encounter.class</code>, not Patient - try <code>GET /api/encounters</code> to see it.</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Key vocabulary</h2>
+    <div class="tablewrap"><table>
+      <tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td><code>LOINC</code></td><td>Universal code system for lab tests. <code>718-7</code> = Hemoglobin in Blood. Carried in <code>Observation.code</code>.</td></tr>
+      <tr><td><code>MSH / PID / PV1 / EVN</code></td><td>HL7v2 segments: message header, patient identity, patient visit, event type.</td></tr>
+      <tr><td><code>ADT^A01</code></td><td>Admit/visit notification: message type ADT, trigger event A01 (admit).</td></tr>
+      <tr><td><code>Reference</code> (<code>Patient/patient-1</code>)</td><td>How FHIR resources point at each other - the replacement for HL7v2's implicit bundling.</td></tr>
+      <tr><td><code>Cardinality</code> (<code>1..1</code>)</td><td>How many times a field may appear. <code>Observation.status</code> is <code>1..1</code> (required) - delete it and validation fails.</td></tr>
+    </table></div>
+  </section>
+
+  <div class="pager">
+    <a class="btn ghost" href="data-flow.html" style="text-decoration:none">← Data flow</a>
+    <a class="btn" href="practice.html" style="text-decoration:none">Practice →</a>
+  </div>
+</main>
+</body>
+</html>

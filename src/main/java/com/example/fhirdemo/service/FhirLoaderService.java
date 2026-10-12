@@ -80,7 +80,7 @@ public class FhirLoaderService implements ApplicationRunner {
             return;
         }
         if (resources == null || resources.length == 0) {
-            log.warn("FhirLoader: no sample files found at {} — nothing loaded (running on empty H2)", SAMPLE_PATTERN);
+            log.warn("FhirLoader: no sample files found at {} - nothing loaded (running on empty H2)", SAMPLE_PATTERN);
             return;
         }
 
@@ -123,14 +123,14 @@ public class FhirLoaderService implements ApplicationRunner {
                         skipped++;
                     }
                 } else {
-                    log.warn("FhirLoader: {} has unsupported resourceType {} — skipped",
+                    log.warn("FhirLoader: {} has unsupported resourceType {} - skipped",
                             filename, parsed.getClass().getSimpleName());
                     skipped++;
                 }
             } catch (Exception e) {
                 // Loud but safe: one bad file must not kill boot.
                 failed++;
-                log.error("FhirLoader: failed to load {} — skipped ({})", filename, e.toString());
+                log.error("FhirLoader: failed to load {} - skipped ({})", filename, e.toString());
             }
         }
 
@@ -143,7 +143,7 @@ public class FhirLoaderService implements ApplicationRunner {
     private boolean savePatient(Patient patient, String rawJson) {
         String fhirId = patient.getIdElement().getIdPart();
         if (fhirId == null || fhirId.isBlank()) {
-            log.warn("FhirLoader: Patient without id — skipped");
+            log.warn("FhirLoader: Patient without id - skipped");
             return false;
         }
         if (patientRepository.findByFhirId(fhirId).isPresent()) {
@@ -170,7 +170,7 @@ public class FhirLoaderService implements ApplicationRunner {
     private boolean saveObservation(Observation observation, String rawJson) {
         String fhirId = observation.getIdElement().getIdPart();
         if (fhirId == null || fhirId.isBlank()) {
-            log.warn("FhirLoader: Observation without id — skipped");
+            log.warn("FhirLoader: Observation without id - skipped");
             return false;
         }
         if (observationRepository.findByFhirId(fhirId).isPresent()) {
@@ -205,7 +205,7 @@ public class FhirLoaderService implements ApplicationRunner {
     private boolean saveEncounter(Encounter encounter, String rawJson) {
         String fhirId = encounter.getIdElement().getIdPart();
         if (fhirId == null || fhirId.isBlank()) {
-            log.warn("FhirLoader: Encounter without id — skipped");
+            log.warn("FhirLoader: Encounter without id - skipped");
             return false;
         }
         if (encounterRepository.findByFhirId(fhirId).isPresent()) {
@@ -234,7 +234,7 @@ public class FhirLoaderService implements ApplicationRunner {
     private boolean savePractitioner(Practitioner practitioner, String rawJson) {
         String fhirId = practitioner.getIdElement().getIdPart();
         if (fhirId == null || fhirId.isBlank()) {
-            log.warn("FhirLoader: Practitioner without id — skipped");
+            log.warn("FhirLoader: Practitioner without id - skipped");
             return false;
         }
         if (practitionerRepository.findByFhirId(fhirId).isPresent()) {
@@ -268,7 +268,7 @@ public class FhirLoaderService implements ApplicationRunner {
             }
             return LocalDate.parse(s.substring(0, 10));
         } catch (Exception e) {
-            log.warn("FhirLoader: unparseable FHIR date '{}' — stored as null", s);
+            log.warn("FhirLoader: unparseable FHIR date '{}' - stored as null", s);
             return null;
         }
     }
@@ -280,7 +280,7 @@ public class FhirLoaderService implements ApplicationRunner {
         try {
             return Double.parseDouble(lexical.strip());
         } catch (NumberFormatException e) {
-            log.warn("FhirLoader: non-numeric Observation value '{}' — stored as null", lexical);
+            log.warn("FhirLoader: non-numeric Observation value '{}' - stored as null", lexical);
             return null;
         }
     }

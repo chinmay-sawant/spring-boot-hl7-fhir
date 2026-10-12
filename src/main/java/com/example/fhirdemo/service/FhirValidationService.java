@@ -39,7 +39,7 @@ public class FhirValidationService {
      */
     public List<String> validateResource(String json) {
         if (json == null || json.isBlank()) {
-            return List.of("ERROR: empty input — expected a FHIR resource as JSON");
+            return List.of("ERROR: empty input - expected a FHIR resource as JSON");
         }
         IBaseResource resource;
         try {
@@ -94,7 +94,7 @@ public class FhirValidationService {
                   "birthDate": "1990-01-01"
                 }
                 """;
-        // Observation.status is 1..1 in R4 — omitting it must surface an issue.
+        // Observation.status is 1..1 in R4 - omitting it must surface an issue.
         String badObservation = """
                 {
                   "resourceType": "Observation",

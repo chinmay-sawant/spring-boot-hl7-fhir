@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation · Spring Boot HL7 FHIR Learning Demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">FHIR Learning Demo <span>· documentation</span></a>
+  <nav>
+    <a href="index.html" aria-current="page">Overview</a>
+    <a href="walkthrough.html">Walkthrough</a>
+    <a href="endpoints.html">Endpoints</a>
+    <a href="data-flow.html">Data flow</a>
+    <a href="concepts.html">FHIR vs HL7v2</a>
+    <a href="practice.html">Practice</a>
+    <a href="theory/hl7.html">Theory: HL7</a>
+    <a href="theory/fhir.html">Theory: FHIR</a>
+    <a href="theory/together.html">Theory: Together</a>
+  </nav>
+</header>
+<main>
+  <p class="kicker">Start here</p>
+  <h1>Learn FHIR and HL7v2 with the demo app</h1>
+  <p class="lede">This documentation answers one question: <strong>how do I run this Spring Boot app and use it to learn FHIR and HL7v2?</strong> It is split into focused pages. Work them in order, or jump to the page you need. All sample outputs are real responses captured from the running app.</p>
+
+  <div class="stats" aria-label="Demo data at a glance">
+    <div class="stat"><b>2</b><span>Patients (Smith, Doe)</span></div>
+    <div class="stat"><b>2</b><span>Observations (LOINC labs)</span></div>
+    <div class="stat"><b>1</b><span>Encounter (finished, AMB)</span></div>
+    <div class="stat"><b>1</b><span>Practitioner (active)</span></div>
+    <div class="stat"><b>1</b><span>ADT^A01 HL7v2 message</span></div>
+  </div>
+
+  <section>
+    <div class="grid">
+      <a class="card link" href="walkthrough.html"><h3>1 · Walkthrough →</h3><p>Ten steps from <code>java -version</code> to ADT→FHIR conversion. One command, one expected output, one takeaway per step.</p></a>
+      <a class="card link" href="endpoints.html"><h3>2 · Endpoint explorer →</h3><p>Every REST endpoint with the exact <code>curl</code> to run and the real JSON response, plus a copy button.</p></a>
+      <a class="card link" href="data-flow.html"><h3>3 · Data flow →</h3><p>Where the data lives and moves: controllers, services, H2, and the read-only live HAPI fetch.</p></a>
+      <a class="card link" href="concepts.html"><h3>4 · FHIR vs HL7v2 →</h3><p>The mental model in one table, plus exactly how each ADT^A01 field maps to a FHIR Patient field.</p></a>
+      <a class="card link" href="practice.html"><h3>5 · Practice →</h3><p>Five exercises to lock it in, with a progress tracker and a troubleshooting note.</p></a>
+      <a class="card link" href="theory/hl7.html"><h3>Theory · HL7 →</h3><p>HL7 from zero: the standards family, v2 message anatomy, data types, triggers, ACK, plus an annotated walkthrough of the demo message.</p></a>
+      <a class="card link" href="theory/fhir.html"><h3>Theory · FHIR →</h3><p>FHIR from zero: resources, R4, references, REST, validation and terminology - every concept tied to the demo samples.</p></a>
+      <a class="card link" href="theory/together.html"><h3>Theory · Together →</h3><p>How v2 and FHIR coexist: field-level conversion guide, interface engines, migration strategies, hands-on round-trip.</p></a>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker">Stack</p>
+    <h2>What this demo is built from</h2>
+    <div class="tablewrap"><table>
+      <tr><th>Piece</th><th>Version / location</th></tr>
+      <tr><td>Spring Boot · Java · Maven</td><td>3.2.5 · 17 · 3.9.x</td></tr>
+      <tr><td>HAPI FHIR (R4)</td><td>7.4.0 - parsing, validation, live client</td></tr>
+      <tr><td>HAPI HL7v2</td><td>2.5.1 - ADT^A01 parse and generate</td></tr>
+      <tr><td>Database</td><td>H2 in-memory (<code>jdbc:h2:mem:fhirDb</code>, user <code>sa</code>, empty password)</td></tr>
+      <tr><td>FHIR samples</td><td><code>src/main/resources/fhir-samples/</code> (2 Patients, 2 Observations, 1 Encounter, 1 Practitioner)</td></tr>
+      <tr><td>HL7v2 sample</td><td><code>src/main/resources/hl7-samples/adt-a01.hl7</code></td></tr>
+    </table></div>
+    <div class="pager">
+      <span></span>
+      <a class="btn" href="walkthrough.html" style="text-decoration:none">Start the walkthrough →</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>Companion to <code>plan/v0.0.1/PLAN.md</code> (complete 2026-10-12), <code>README.md</code>, and <code>plan/v0.0.1/html-explainer/index.html</code> (single-page edition of this guide).</p>
+  </footer>
+</main>
+</body>
+</html>
