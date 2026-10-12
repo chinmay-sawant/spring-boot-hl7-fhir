@@ -1,0 +1,37 @@
+{
+  "resourceType": "Patient",
+  "id": "patient-2",
+  "identifier": [
+    {
+      "system": "http://hospital.example.org/mrn",
+      "value": "PATIENT-2"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Doe",
+      "given": ["Jane"]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(312) 555-0142",
+      "use": "mobile"
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1990-08-22",
+  "address": [
+    {
+      "use": "home",
+      "line": ["456 Oak Ave"],
+      "city": "Chicago",
+      "state": "IL",
+      "postalCode": "60601",
+      "country": "USA"
+    }
+  ]
+}

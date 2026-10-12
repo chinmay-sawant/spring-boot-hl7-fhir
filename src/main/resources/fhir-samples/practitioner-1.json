@@ -1,0 +1,27 @@
+{
+  "resourceType": "Practitioner",
+  "id": "practitioner-1",
+  "identifier": [
+    {
+      "system": "http://hospital.example.org/npi",
+      "value": "12345"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "House",
+      "given": ["Gregory"]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(217) 555-0199",
+      "use": "work"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1959-06-11"
+}

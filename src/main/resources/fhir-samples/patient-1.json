@@ -1,0 +1,37 @@
+{
+  "resourceType": "Patient",
+  "id": "patient-1",
+  "identifier": [
+    {
+      "system": "http://hospital.example.org/mrn",
+      "value": "PATIENT-1"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Smith",
+      "given": ["John", "A"]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(217) 555-0100",
+      "use": "home"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1980-05-15",
+  "address": [
+    {
+      "use": "home",
+      "line": ["123 Main St"],
+      "city": "Springfield",
+      "state": "IL",
+      "postalCode": "62701",
+      "country": "USA"
+    }
+  ]
+}

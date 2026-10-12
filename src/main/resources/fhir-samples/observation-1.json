@@ -1,0 +1,37 @@
+{
+  "resourceType": "Observation",
+  "id": "observation-1",
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "laboratory",
+          "display": "Laboratory"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "718-7",
+        "display": "Hemoglobin [Mass/volume] in Blood"
+      }
+    ],
+    "text": "Hemoglobin"
+  },
+  "subject": {
+    "reference": "Patient/patient-1",
+    "display": "John A Smith"
+  },
+  "effectiveDateTime": "2024-01-15",
+  "valueQuantity": {
+    "value": 14.2,
+    "unit": "g/dL",
+    "system": "http://unitsofmeasure.org",
+    "code": "g/dL"
+  }
+}
